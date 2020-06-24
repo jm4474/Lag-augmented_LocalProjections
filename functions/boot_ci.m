@@ -15,14 +15,30 @@ function cis = boot_ci(pseudo_truth, estim_data, ses_data, estims_boot, ses_boot
     
     
     % Bootstrap quantiles
-    estim_boot_quants = quantile(estims_boot, [alpha/2 1-alpha/2], 1); % Bootstrap quantiles of estimates
-    tstats_boot = (estims_boot - pseudo_truth)./ses_boot; % Bootstrap t-stats
-    tstat_boot_quants = quantile(tstats_boot, [1-alpha/2 alpha/2], 1); % Bootstrap quantiles of t-stats
+    estim_boot_quants ...
+        = quantile(estims_boot, [alpha/2 1-alpha/2], 1); 
+          % Bootstrap quantiles of estimates
+          
+    tstats_boot ...
+        = (estims_boot - pseudo_truth)./ses_boot; 
+          % Bootstrap t-stats
+          
+    tstat_boot_quants ...
+        = quantile(tstats_boot, [1-alpha/2 alpha/2], 1); 
+          % Bootstrap quantiles of t-stats
     
     % Compute confidence intervals
-    ci_efron = estim_boot_quants; % Efron
-    ci_hall = estim_data + pseudo_truth - estim_boot_quants([2 1],:); % Hall
-    ci_hall_t = estim_data - ses_data.*tstat_boot_quants; % Hall percentile-t
+    ci_efron ...
+        = estim_boot_quants; 
+        % Efron
+        
+    ci_hall ...
+        = estim_data + pseudo_truth - estim_boot_quants([2 1],:); 
+        % Hall
+        
+    ci_hall_t ...
+        = estim_data - ses_data.*tstat_boot_quants; 
+        % Hall percentile-t
     
     % Reshape
     cis = reshape([ci_efron ci_hall ci_hall_t], 2, [], 3);
