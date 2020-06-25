@@ -1,4 +1,4 @@
-function Y_boot = ar_boot(beta, res, Y, p, homosk, no_const)
+function Y_boot = var_boot(beta, res, Y, p, homosk, no_const)
 
     % AR residual bootstrap, homoskedastic or wild
     

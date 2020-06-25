@@ -1,4 +1,4 @@
-function [irs, irs_varcov, betahat_estim, res_estim] = ar_ir_estim(Y, p, p_estim, horzs, bias_corr, homosk, no_const)
+function [irs, irs_varcov, betahat_estim, res_estim] = var_ir_estim(Y, p, p_estim, horzs, bias_corr, homosk, no_const)
     
     % VAR(p) least-squares estimates and delta method s.e.
     % allowing for lag augmentation
@@ -31,13 +31,13 @@ function [irs, irs_varcov, betahat_estim, res_estim] = ar_ir_estim(Y, p, p_estim
     % If bias correction is desired...
     if bias_corr
         Sigmahat = (res_estim'*res_estim)/(size(res_estim,1)-p_estim-1); % Residual variance estimate
-        betahat_estim = ar_biascorr(betahat_estim, Sigmahat, T);
+        betahat_estim = var_biascorr(betahat_estim, Sigmahat, T);
     end
     
     if nargout==1
-        irs = ar_ir(betahat,horzs); % Compute impulse responses
+        irs = var_ir(betahat,horzs); % Compute impulse responses
     else
-        [irs, jacob] = ar_ir(betahat,horzs); % Compute impulse responses and Jacobian
+        [irs, jacob] = var_ir(betahat,horzs); % Compute impulse responses and Jacobian
         nh = length(horzs);
         irs_varcov = zeros(n^2,n^2,nh);
         for h=1:nh

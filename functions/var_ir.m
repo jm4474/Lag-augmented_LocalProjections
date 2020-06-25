@@ -1,4 +1,4 @@
-function [irs, jacob] = ar_ir(beta,horzs)
+function [irs, jacob] = var_ir(beta,horzs)
 
     % VAR(p) reduced-form impulse responses and Jacobian wrt. parameters
     

@@ -163,7 +163,7 @@ for i_dgp = 1:numdgp
     
     % True impulse responses
     i_beta = [i_rho 0; 0.5 0.5];
-    i_ir_all = ar_ir(i_beta,settings.horzs);
+    i_ir_all = var_ir(i_beta,settings.horzs);
     irs_true(i_dgp,:) = i_ir_all(settings.resp_var,settings.innov,:);
     i_n = size(i_beta,1);
     

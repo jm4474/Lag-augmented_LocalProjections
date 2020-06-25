@@ -1,4 +1,4 @@
-function betahat_corr = ar_biascorr(betahat, sigma2hat, T)
+function betahat_corr = var_biascorr(betahat, sigma2hat, T)
 
     % Analytical bias correction for AR(p) estimator
     % Pope (JTSA 1990), equation 9
