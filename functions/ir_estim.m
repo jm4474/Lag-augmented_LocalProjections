@@ -6,26 +6,28 @@ function [irs, ses, cis_dm, cis_boot, betahat, res] = ir_estim(Y, p, horzs, vara
     % Inputs: see below
     
     % Outputs:
-    % irs       H x 1       estimated impulse responses
-    % ses       H x 1       s.e. for impulse responses
+    % irs       1 x H       estimated impulse responses
+    % ses       1 x H       s.e. for impulse responses
     % cis_dm    2 x H       lower and upper limits of delta method confidence intervals
     % cis_boot  2 x H x 3   lower and upper limits of bootstrap confidence intervals (3rd index: type of interval, either Efron, Hall, or Hall percentile-t)
     % betahat               coefficient estimates in regression(s)
     % res                   residuals in regression(s)
     
     
-    %% Parse optional inputs
+    %% Parse inputs
     
     ip = inputParser;
     
     % Required inputs
-    addRequired(ip, 'Y', @isnumeric);       % T x 1     data vector
+    addRequired(ip, 'Y', @isnumeric);       % T x n     data vector
     addRequired(ip, 'p', @isnumeric);       % 1 x 1     lag length (not counting any augmentation)
-    addRequired(ip, 'horzs', @isnumeric);   % 1 x m     impulse response horizons of interest
+    addRequired(ip, 'horzs', @isnumeric);   % 1 x H     impulse response horizons of interest
     
     % Optional inputs
-    addParameter(ip, 'alpha', 0.05, @isnumeric); % Significance level (default: 0.05)
+    addParameter(ip, 'resp_var', 1, @isnumeric); % Index of response variable of interest (default: first variable)
+    addParameter(ip, 'innov', 1, @isnumeric); % Index of innovation of interest, or n x 1 vector with linear combination of innovations (default: first innovation)
     addParameter(ip, 'estimator', 'lp', @ischar); % Estimator type, either 'ar' or 'lp' (default: local projection)
+    addParameter(ip, 'alpha', 0.05, @isnumeric); % Significance level (default: 0.05)
     addParameter(ip, 'lag_aug', false, @islogical); % Lag-augment? (default: no)
     addParameter(ip, 'bias_corr', true, @islogical); % Bias-correct AR estimates? (default: yes)
     addParameter(ip, 'se_homosk', false, @islogical); % Homoskedastic standard errors/bootstrap? (default: no)
@@ -42,25 +44,33 @@ function [irs, ses, cis_dm, cis_boot, betahat, res] = ir_estim(Y, p, horzs, vara
     
     %% Preliminaries
     
-    T = length(Y);              % Sample size
+    [T,n] = size(Y);              % Dimensions
     
-    numhorz ...
+    nh ...
       = length(horzs); % Number of horizons
     
     cvs ...
       = repmat(norminv(1-ip.Results.alpha/2),...
-              1, numhorz);      % Default critical values: normal
+              1, nh);      % Default critical values: normal
           
     cis_boot ...
-      = nan(2,numhorz,3);       % Initializes NaN array
+      = nan(2,nh,3);       % Initializes NaN array
+  
+    % Determine linear combination of innovations
+    the_eye = eye(n);
+    if length(ip.Results.innov)==1
+        nu = the_eye(:,ip.Results.innov);
+    else
+        nu = ip.Results.innov(:);
+    end
     
     
-    %% Point estimates and s.e.
+    %% Point estimates and var-cov
     
     if strcmp(ip.Results.estimator, 'ar') % AR
         
-        % AR impulse responses
-        [irs, ses, ~, betahat, res] = ar_ir_estim(Y, ...
+        % VAR impulse responses
+        [irs_all, irs_all_varcov, betahat, res] = ar_ir_estim(Y, ...
                                                   p,...
                                                   p+ip.Results.lag_aug,...
                                                   horzs, ...
@@ -68,20 +78,28 @@ function [irs, ses, cis_dm, cis_boot, betahat, res] = ir_estim(Y, p, horzs, vara
                                                   ip.Results.se_homosk,...
                                                   ip.Results.no_const);
         
+        % Compute impulse responses of interest
+        irs = nu'*permute(irs_all(ip.Results.resp_var,:,:), [2 3 1]);
+        ses = zeros(1,nh);
+        for h=1:nh
+            aux = kron(nu',the_eye(ip.Results.resp_var,:));
+            ses(h) = sqrt(aux*irs_all_varcov(:,:,h)*aux');
+        end
+        
     elseif strcmp(ip.Results.estimator, 'lp') % LP
         
-        irs = zeros(numhorz,1);
+        irs = zeros(1,nh);
         
-        ses = zeros(numhorz,1);
+        ses = zeros(1,nh);
         
         betahat ...
-            = cell(numhorz,1);
+            = cell(1,nh);
         
-        res = cell(numhorz,1);
+        res = cell(1,nh);
         
-        X   = cell(numhorz,1);
+        X   = cell(1,nh);
         
-        for h=1:numhorz % For each horizon...
+        for h=1:nh % For each horizon...
             
             the_horz = horzs(h); % Horizon
             
@@ -108,12 +126,15 @@ function [irs, ses, cis_dm, cis_boot, betahat, res] = ir_estim(Y, p, horzs, vara
             end
             
             % LP regression
-            [irs(h), ses(h), betahat{h},...
+            [the_ir, the_ir_varcov, betahat{h},...
             ~, res{h}, X{h}] = lp(Y, ...
                                   p-1+ip.Results.lag_aug,...                                                                                          
-                                  the_horz,...                  
+                                  the_horz,...      
+                                  ip.Results.resp_var,...
                                   the_se_setting,...
                                   ip.Results.no_const);
+            irs(h) = the_ir*nu;
+            ses(h) = sqrt(nu'*the_ir_varcov*nu);
             
         end
         
@@ -127,14 +148,14 @@ function [irs, ses, cis_dm, cis_boot, betahat, res] = ir_estim(Y, p, horzs, vara
     
     %% Delta method confidence intervals
     
-    cis_dm = irs' + [-1; 1]*(cvs.*ses');
+    cis_dm = irs + [-1; 1]*(cvs.*ses);
     
     
     %% Bootstrap confidence intervals
     
     if ~isempty(ip.Results.bootstrap)
         
-        estims_boot = zeros(ip.Results.boot_num,numhorz);
+        estims_boot = zeros(ip.Results.boot_num,nh);
         ses_boot = estims_boot;
         
         if strcmp(ip.Results.bootstrap, 'ar') % Recursive AR bootstrap specifications
@@ -165,7 +186,7 @@ function [irs, ses, cis_dm, cis_boot, betahat, res] = ir_estim(Y, p, horzs, vara
             
             pseudo_truth = irs;
   
-            for h=1:numhorz % Treat each horizon separately
+            for h=1:nh % Treat each horizon separately
 
                 for b=1:ip.Results.boot_num
 

@@ -1,55 +1,51 @@
-function [betahat, se, varcov, res, X_expand] = linreg(Y, X, se_setting, no_const)
+function [betahat, varcov, res, X_expand] = linreg(Y, X, se_setting, no_const)
 
-    % Linear regression with Eicker-Huber-White s.e.
+    % System linear regression
+    % Y_t = beta*X_t + epsilon_t
+    % dim(Y_t) = n, dim(beta) = n x k
     
     % Intputs:
-    % Y         n x 1   dependent variable data vector
-    % X         n x k   covariate data matrix
+    % Y         T x n   dependent variable data matrix
+    % X         T x k   covariate data matrix
     % se_setting        EITHER bool: if true, homoskedastic s.e.; if false, EHW s.e.
     %                   OR function handle: function that returns HAC/HAR sandwich matrix
     % no_const  bool    true: omit intercept
     
     % Outputs:
-    % betahat   (k+1) x 1       estimated coefficients
-    % se        (k+1) x 1       s.e. of coefficients
-    % varcov    (k+1) x (k+1)   var-cov of betahat
-    % res       n x 1           residual vector
-    % X_expand  n x (k+1)       expanded covariate data matrix with intercept
+    % betahat   n x (k+1)       estimated coefficients
+    % varcov    n(k+1) x n(k+1) var-cov of vec(betahat)
+    % res       T x n           residual matrix
+    % X_expand  T x (k+1)       expanded covariate data matrix with intercept
     
     
-    n = size(X,1);
+    [T,n] = size(Y);
     
-    % Determine whether to include intercept
-    if no_const
-        X_expand = X;
-    else
-        X_expand = [X ones(n,1)];
-    end
+    % Include intercept if desired
+    X_expand = [X ones(T,1-no_const)];
     k = size(X_expand,2);
     
     % OLS
-    betahat = X_expand\Y;
+    betahat = (X_expand\Y)';
     
     % Standard errors
     
     if nargout > 1
         
-        res = Y-X_expand*betahat;
+        res = Y-X_expand*betahat';
         XpX = X_expand'*X_expand;
-        scores = X_expand.*res;
+        scores = kron(X_expand,ones(1,n)).*repmat(res,1,k);
 
         if islogical(se_setting)
             if se_setting % If homoskedastic s.e.
-                varcov = inv(XpX)*(res'*res)/n;
+                varcov = inv(XpX)*(res'*res)/T;
             else % If EHW s.e.
-                varcov = XpX\((scores'*scores)/XpX); % EHW var-cov matrix
+                varcov = kron_fast(inv(XpX),kron_fast(inv(XpX),scores'*scores,0)',0)'; % EHW var-cov matrix
             end
         else % If HAC/HAR s.e.
-            varcov = XpX\(se_setting(scores)/XpX); % HAC/HAR var-cov matrix
+            varcov = kron_fast(inv(XpX),kron_fast(inv(XpX),se_setting(scores),0)',0)'; % HAC/HAR var-cov matrix
         end
 
-        varcov = n/(n-k)*varcov; % Finite sample adjustment as in Stata
-        se = sqrt(diag(varcov)); % Standard errors
+        varcov = T/(T-k)*varcov; % Finite sample adjustment as in Stata
     
     end
 
