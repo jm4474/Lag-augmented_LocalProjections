@@ -35,7 +35,7 @@ function [irs, ses, cis_dm, cis_boot, betahat, res] = ir_estim(Y, p, horzs, vara
     addParameter(ip, 'har_cv', [], @(x) isa(x, 'function_handle') || isempty(x)); % HAR critical value as function of bandwidth, empty if normal critical value
     addParameter(ip, 'bootstrap', [], @(x) ischar(x) || isempty(x)); % Bootstrap type, either 'ar', 'resid', or 'pair'; empty if delta method (default: delta method)
     addParameter(ip, 'boot_num', 1000, @isnumeric); % Bootstrap iterations (default: 1000)
-    addParameter(ip, 'boot_lag_aug', false, @islogical); % Lag-augment in bootstrap DGP? (default: no)
+    addParameter(ip, 'boot_lag_aug', false, @islogical); % Lag-augment in bootstrap DGP? Only relevant for 'ar' bootstrap (default: no)
     
     parse(ip, Y, p, horzs, varargin{:});
     

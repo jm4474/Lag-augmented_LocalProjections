@@ -1,4 +1,4 @@
-function [irs, ses, ir_varcov, betahat_estim, res_estim] = ar_ir_estim(Y, p, p_estim, horzs, biascorr, homosk, noconst)
+function [irs, ses, ir_varcov, betahat_estim, res_estim] = ar_ir_estim(Y, p, p_estim, horzs, biascorr, homosk, no_const)
     
     % AR(p) least-squares estimates and delta method s.e.
     % allowing for lag augmentation
@@ -10,7 +10,7 @@ function [irs, ses, ir_varcov, betahat_estim, res_estim] = ar_ir_estim(Y, p, p_e
     % horzs     H x 1   horizons of interest
     % biascorr  bool    true: apply analytical bias correction (Pope, 1990)
     % homosk    bool    true: homoskedastic s.e., false: EHW s.e.
-    % noconst   bool    true: omit intercept
+    % no_const  bool    true: omit intercept
     
     % Outputs:
     % irs           H x 1   estimated impulse responses at select horizons
@@ -21,7 +21,7 @@ function [irs, ses, ir_varcov, betahat_estim, res_estim] = ar_ir_estim(Y, p, p_e
     
     
     % One-step forecasting regression of Y_{t+1} on (Y_t, ..., Y_{t-p_estim+1})
-    [~,~,betahat_estim,betahat_estim_varcov,res_estim] = lp(Y,p_estim-1,1,homosk,noconst);
+    [~,~,betahat_estim,betahat_estim_varcov,res_estim] = lp(Y,p_estim-1,1,homosk,no_const);
     
     % If bias correction is desired...
     if biascorr

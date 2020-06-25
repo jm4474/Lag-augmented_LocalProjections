@@ -1,4 +1,4 @@
-function Y_boot = ar_boot(beta, res, Y, p, homosk, noconst)
+function Y_boot = ar_boot(beta, res, Y, p, homosk, no_const)
 
     % AR residual bootstrap, homoskedastic or wild
     
@@ -10,7 +10,7 @@ function Y_boot = ar_boot(beta, res, Y, p, homosk, noconst)
     % Y         T x 1       data vector
     % p         1 x 1       lag length
     % homosk    bool        true: homoskedastic bootstrap, false: wild bootstrap
-    % noconst   bool        true: exclude intercept from bootstrap samples
+    % no_const  bool        true: exclude intercept from bootstrap samples
     
     % Outputs:
     % Y_boot    T x 1       bootstrap sample
@@ -26,7 +26,7 @@ function Y_boot = ar_boot(beta, res, Y, p, homosk, noconst)
     
     % Intercept (if applicable)
     nu = 0;
-    if ~noconst
+    if ~no_const
         nu = beta(end);
     end
 

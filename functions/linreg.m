@@ -1,4 +1,4 @@
-function [betahat, se, varcov, res, X_expand] = linreg(Y, X, se_setting, noconst)
+function [betahat, se, varcov, res, X_expand] = linreg(Y, X, se_setting, no_const)
 
     % Linear regression with Eicker-Huber-White s.e.
     
@@ -7,7 +7,7 @@ function [betahat, se, varcov, res, X_expand] = linreg(Y, X, se_setting, noconst
     % X         n x k   covariate data matrix
     % se_setting        EITHER bool: if true, homoskedastic s.e.; if false, EHW s.e.
     %                   OR function handle: function that returns HAC/HAR sandwich matrix
-    % noconst   bool    true: omit intercept
+    % no_const  bool    true: omit intercept
     
     % Outputs:
     % betahat   (k+1) x 1       estimated coefficients
@@ -20,7 +20,7 @@ function [betahat, se, varcov, res, X_expand] = linreg(Y, X, se_setting, noconst
     n = size(X,1);
     
     % Determine whether to include intercept
-    if noconst
+    if no_const
         X_expand = X;
     else
         X_expand = [X ones(n,1)];
