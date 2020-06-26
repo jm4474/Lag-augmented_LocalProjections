@@ -73,7 +73,7 @@ sim.num_workers ...
 
 % Reporting
 results_filename ...
-    = sprintf('%s%s', 'sim_', dgp.type);  % File name for storing results                                                                
+    = sprintf('%s%s', 'sim_ar1_', dgp.type);  % File name for storing results                                                                
 
 
 %% Regression settings

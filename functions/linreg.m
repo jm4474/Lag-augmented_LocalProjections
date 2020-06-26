@@ -37,7 +37,7 @@ function [betahat, varcov, res, X_expand] = linreg(Y, X, se_setting, no_const)
 
         if islogical(se_setting)
             if se_setting % If homoskedastic s.e.
-                varcov = inv(XpX)*(res'*res)/T;
+                varcov = kron(inv(XpX),(res'*res)/T);
             else % If EHW s.e.
                 varcov = kron_fast(inv(XpX),kron_fast(inv(XpX),scores'*scores,0)',0)'; % EHW var-cov matrix
             end
