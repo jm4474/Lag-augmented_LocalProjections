@@ -19,25 +19,42 @@ function [irs, ses, cis_dm, cis_boot, betahat, res] = ir_estim(Y, p, horzs, vara
     ip = inputParser;
     
     % Required inputs
-    addRequired(ip, 'Y', @isnumeric);       % T x n     data vector
-    addRequired(ip, 'p', @isnumeric);       % 1 x 1     lag length (not counting any augmentation)
-    addRequired(ip, 'horzs', @isnumeric);   % 1 x H     impulse response horizons of interest
+    addRequired(ip, 'Y', @isnumeric);
+        % T x n     data vector
+    addRequired(ip, 'p', @isnumeric);
+        % 1 x 1     lag length (not counting any augmentation)
+    addRequired(ip, 'horzs', @isnumeric);
+        % 1 x H     impulse response horizons of interest
     
     % Optional inputs
-    addParameter(ip, 'resp_var', 1, @isnumeric); % Index of response variable of interest (default: first variable)
-    addParameter(ip, 'innov', 1, @isnumeric); % Index of innovation of interest, or n x 1 vector with linear combination of innovations (default: first innovation)
-    addParameter(ip, 'estimator', 'lp', @ischar); % Estimator type, either 'var' or 'lp' (default: local projection)
-    addParameter(ip, 'alpha', 0.05, @isnumeric); % Significance level (default: 0.05)
-    addParameter(ip, 'lag_aug', false, @islogical); % Lag-augment? (default: no)
-    addParameter(ip, 'bias_corr', true, @islogical); % Bias-correct AR estimates? (default: yes)
-    addParameter(ip, 'se_homosk', false, @islogical); % Homoskedastic standard errors/bootstrap? (default: no)
-    addParameter(ip, 'no_const', false, @islogical); % Omit intercept? (default: no)
-    addParameter(ip, 'har', [], @(x) isa(x, 'function_handle') || isempty(x)); % HAR estimator as function of data and bandwidth, empty if no HAR (default: no HAR)
-    addParameter(ip, 'har_bw', [], @(x) isa(x, 'function_handle') || isempty(x)); % HAR bandwidth as function of sample size
-    addParameter(ip, 'har_cv', [], @(x) isa(x, 'function_handle') || isempty(x)); % HAR critical value as function of bandwidth, empty if normal critical value
-    addParameter(ip, 'bootstrap', [], @(x) ischar(x) || isempty(x)); % Bootstrap type, either 'var', 'resid', or 'pair'; empty if delta method (default: delta method)
-    addParameter(ip, 'boot_num', 1000, @isnumeric); % Bootstrap iterations (default: 1000)
-    addParameter(ip, 'boot_lag_aug', false, @islogical); % Lag-augment in bootstrap DGP? Only relevant for 'ar' bootstrap (default: no)
+    addParameter(ip, 'resp_var', 1, @isnumeric);
+        % Index of response variable of interest (default: first variable)
+    addParameter(ip, 'innov', 1, @isnumeric);
+        % Index of innovation of interest, or n x 1 vector with linear combination of innovations (default: first innovation)
+    addParameter(ip, 'estimator', 'lp', @ischar);
+        % Estimator type, either 'var' or 'lp' (default: local projection)
+    addParameter(ip, 'alpha', 0.05, @isnumeric);
+        % Significance level (default: 0.05)
+    addParameter(ip, 'lag_aug', false, @islogical);
+        % Lag-augment? (default: no)
+    addParameter(ip, 'bias_corr', true, @islogical);
+        % Bias-correct VAR estimates? (default: yes)
+    addParameter(ip, 'se_homosk', false, @islogical);
+        % Homoskedastic standard errors/bootstrap? (default: no)
+    addParameter(ip, 'no_const', false, @islogical);
+        % Omit intercept? (default: no)
+    addParameter(ip, 'har', [], @(x) isa(x, 'function_handle') || isempty(x));
+        % HAR estimator as function of data and bandwidth, empty if no HAR (default: no HAR)
+    addParameter(ip, 'har_bw', [], @(x) isa(x, 'function_handle') || isempty(x));
+        % HAR bandwidth as function of sample size
+    addParameter(ip, 'har_cv', [], @(x) isa(x, 'function_handle') || isempty(x));
+        % HAR critical value as function of bandwidth, empty if normal critical value
+    addParameter(ip, 'bootstrap', [], @(x) ischar(x) || isempty(x));
+        % Bootstrap type, either 'var', 'resid', or 'pair'; empty if delta method (default: delta method)
+    addParameter(ip, 'boot_num', 1000, @isnumeric);
+        % Bootstrap iterations (default: 1000)
+    addParameter(ip, 'boot_lag_aug', false, @islogical);
+        % Lag-augment in bootstrap DGP? Only relevant for 'var' bootstrap (default: no)
     
     parse(ip, Y, p, horzs, varargin{:});
     
@@ -59,9 +76,9 @@ function [irs, ses, cis_dm, cis_boot, betahat, res] = ir_estim(Y, p, horzs, vara
     % Determine linear combination of innovations
     if length(ip.Results.innov)==1
         the_eye = eye(n);
-        nu = the_eye(:,ip.Results.innov);
+        nu = the_eye(:,ip.Results.innov); % Unit vector
     else
-        nu = ip.Results.innov(:);
+        nu = ip.Results.innov(:); % User-specified vector
     end
     
     
@@ -164,8 +181,8 @@ function [irs, ses, cis_dm, cis_boot, betahat, res] = ir_estim(Y, p, horzs, vara
                                                   ip.Results.se_homosk,...
                                                   ip.Results.no_const);
             
-            pseudo_truth = var_select(var_ir(betahat_var(:,1:n*p), horzs), [], ip.Results.resp_var, nu); % Pseudo-true impulse responses in bootstrap DGP
-    
+            pseudo_truth = var_select(var_ir(betahat_var(:,1:n*(p+ip.Results.boot_lag_aug)), horzs), [], ip.Results.resp_var, nu); % Pseudo-true impulse responses in bootstrap DGP
+            
             for b=1:ip.Results.boot_num
 
                 % Generate bootstrap sample based on (possibly lag-augmented) AR estimates
@@ -209,12 +226,14 @@ function [irs, ses] = var_select(irs_all, irs_all_varcov, resp_var, nu)
     % VAR: Return impulse responses of interest along with s.e.
 
     irs = nu'*permute(irs_all(resp_var,:,:), [2 3 1]);
+    
+    % Standard errors
     if nargout>1
-        the_eye = eye(size(irs_all,1));
-        nh = size(irs_all,3);
+        [n,~,nh] = size(irs_all);
+        the_eye = eye(n);
+        aux = kron(nu',the_eye(resp_var,:));
         ses = zeros(1,nh);
         for h=1:nh
-            aux = kron(nu',the_eye(resp_var,:));
             ses(h) = sqrt(aux*irs_all_varcov(:,:,h)*aux');
         end
     end

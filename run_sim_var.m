@@ -8,9 +8,11 @@ addpath('functions/');
 
 dgp = struct;
 
-dgp.rhos = 0.5; % 0.9;
+dgp.p = 1;
 
-dgp.Ts = 240; % 2400;
+dgp.rhos = [0.5 0.9];
+
+dgp.Ts = 480; 
 
 
 %% Monte Carlo simulation settings
@@ -21,11 +23,15 @@ sim.numrep ...
     = 2e2;                                % No. of repetitions
 
 sim.rng_seed ...
-    = 202006251;                           % Random number seed
+    = 202006261;                           % Random number seed
 
 sim.num_workers ...
     = 4;                                  % No. of parallel workers 
                                           % (=0: run serial)
+                                          
+% Reporting
+results_filename ...
+    = sprintf('%s%d', 'sim_var_p', dgp.p);  % File name for storing results                                                                
 
 
 %% Regression settings
@@ -33,14 +39,14 @@ sim.num_workers ...
 settings = struct;
 
 settings.p ...
-         = 1;                        % Lag length used for estimation 
+         = dgp.p;                        % Lag length used for estimation 
                                      % (excluding augmented lags)
 
 settings.horzs ...
          = [1 6 12 36 60];           % Horizons of interest
      
-settings.resp_var = 2;
-settings.innov = 1;
+settings.resp_var = 2;              % Index of response variable of interest
+settings.innov = 1;                 % Index of innovation of interest
 
 settings.no_const ...
          = false;                    % true: omit intercept 
@@ -70,21 +76,17 @@ specs = cell(5,1);           % Specifications for the simulations
 
 specs{1} = {'estimator', 'var',...
             'lag_aug', true,...
-            'bias_corr', false,...
-            'bootstrap', 'var',...
-            'boot_lag_aug', true};
+            'bootstrap', 'var'};
 
 specs{2} = {'estimator', 'lp',...
             'lag_aug', false,...
             'har', settings.har,...
-            'bootstrap', 'var',...
-            'bias_corr', false};
+            'bootstrap', 'var'};
 
 specs{3} = {'estimator', 'lp',...
             'lag_aug', true,...
-            'bootstrap', 'var',...
-            'bias_corr', false};
-        
+            'bootstrap', 'var'};
+
 specs{4} = {'estimator', 'lp',...
             'lag_aug', true,...
             'bootstrap', 'resid'};
@@ -178,11 +180,17 @@ for i_dgp = 1:numdgp
             ': rho=',i_rho,...
             'T=', i_T);             % Display the current iteration
     
+	% True VAR parameters
+    i_beta = zeros(2,2*dgp.p);
+    i_beta(1,1) = i_rho;
+    i_beta(2,:) = ([0.5; 0.5]./(1:dgp.p))';
+    i_Sigma = [1 0.3; 0.3 1];
+    i_n = size(i_beta,1);
+    fprintf('%s%6.4f\n', 'Largest root: ', abs(eigs([i_beta; eye(i_n*(dgp.p-1)) zeros(i_n*(dgp.p-1),i_n)],1)));
+    
     % True impulse responses
-    i_beta = [i_rho 0; 0.5 0.5];
     i_ir_all = var_ir(i_beta,settings.horzs);
     irs_true(i_dgp,:) = i_ir_all(settings.resp_var,settings.innov,:);
-    i_n = size(i_beta,1);
     
     parfor(i=1:numrep, sim.num_workers) % For each repetition...
 %     for i=1:numrep
@@ -191,7 +199,7 @@ for i_dgp = 1:numdgp
     
         % Simulate VAR(p) data
         
-        i_Y = var_sim(i_beta, zeros(i_n,1), randn(i_T,i_n), zeros(settings.p,i_n)); % Data series (with y_0=...=y_{1-p}=0)
+        i_Y = var_sim(i_beta, zeros(i_n,1), mvnrnd(zeros(1,i_n),i_Sigma,i_T), zeros(settings.p,i_n)); % Data series (with y_0=...=y_{1-p}=0)
         
         i_estims ...
             = zeros(numspec, numhorz);
@@ -295,3 +303,7 @@ results.lengths ...
 results.median_length ...
     = median(results.lengths, 5); % Median length
            
+
+%% Save results
+status = mkdir('results');
+save(strcat('results/',results_filename, '.mat'), 'dgp', 'specs', 'settings', 'sim', 'results');
