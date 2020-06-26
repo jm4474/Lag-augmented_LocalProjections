@@ -3,8 +3,8 @@ function Y_boot = var_boot(A, res, Y, p, homosk, no_const)
     % VAR residual bootstrap, homoskedastic or wild
     
     % Inputs:
-    % A      n x np         VAR(p) coefficient matrices [A_1,...,A_p]
-    %                       OPTIONAL: length could exceed n*p, in which case last column equals intercept
+    % A         n x np      VAR(p) coefficient matrices [A_1,...,A_p]
+    %                       OPTIONAL: column dimension could exceed n*p, in which case last column equals intercept
     %                       NOTE: only A(:,1:n*p) and A(:,end) will be used
     % res       T_res x n   residuals
     % Y         T x n       data vector

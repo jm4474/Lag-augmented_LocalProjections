@@ -183,7 +183,7 @@ function [irs, ses, cis_dm, cis_boot] = ir_estim(Y, p, horzs, varargin)
             
             for b=1:ip.Results.boot_num
 
-                % Generate bootstrap sample based on (possibly lag-augmented) AR estimates
+                % Generate bootstrap sample based on (possibly lag-augmented) VAR estimates
                 Y_boot = var_boot(Ahat_var, res_var, Y, p+ip.Results.boot_lag_aug, ip.Results.se_homosk, ip.Results.no_const);
 
                 % Estimate on bootstrap sample
