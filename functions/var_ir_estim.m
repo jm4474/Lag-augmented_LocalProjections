@@ -24,15 +24,15 @@ function [irs, irs_varcov, betahat_estim, res_estim] = var_ir_estim(Y, p, p_esti
     % One-step forecasting regression of Y_{t+1} on (Y_t, ..., Y_{t-p_estim+1})
     [~,~,betahat_estim,betahat_estim_varcov,res_estim] = lp(Y,p_estim-1,1,1:n,homosk,no_const);
     
+    % If bias correction is desired...
+    if bias_corr
+        Sigmahat = (res_estim'*res_estim)/(size(res_estim,1)-n*p_estim-1+no_const); % Residual variance estimate
+        betahat_estim(:,1:end-1+no_const) = var_biascorr(betahat_estim(:,1:end-1+no_const), Sigmahat, T);
+    end
+    
     % Only use first p VAR coefficient matrices to compute impulse responses
     betahat = betahat_estim(:,1:n*p);
     betahat_varcov = betahat_estim_varcov(1:n^2*p,1:n^2*p);
-    
-    % If bias correction is desired...
-    if bias_corr
-        Sigmahat = (res_estim'*res_estim)/(size(res_estim,1)-p_estim-1); % Residual variance estimate
-        betahat_estim = var_biascorr(betahat_estim, Sigmahat, T);
-    end
     
     if nargout==1
         irs = var_ir(betahat,horzs); % Compute impulse responses

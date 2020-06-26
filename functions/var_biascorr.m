@@ -1,37 +1,37 @@
-function betahat_corr = var_biascorr(betahat, sigma2hat, T)
+function betahat_corr = var_biascorr(betahat, Sigmahat, T)
 
-    % Analytical bias correction for AR(p) estimator
+    % Analytical bias correction for VAR(p) estimator
     % Pope (JTSA 1990), equation 9
     
     % Inputs:
-    % betahat       p x 1   original AR(p) coefficient estimates
-    % sigma2hat     1 x 1   estimate of AR(p) innovation variance
+    % betahat       n x np  original VAR(p) coefficient estimates [A_1,...,A_p]
+    % Sigmahat     	n x n   estimate of VAR(p) innovation variance
     % T             1 x 1   sample size
     
     % Outputs:
-    % betahat_corr  p x 1   bias-corrected coefficient estimates
+    % betahat_corr  n x np  bias-corrected coefficient estimates
     
     
-    % Set up companion form VAR(1): X_t = A*X_{t-1} + Z_t, where dim(X_t)=p
-    p = length(betahat);
-    A = [betahat'; eye(p-1), zeros(p-1,1)];
+    % Set up companion form: X_t = A*X_{t-1} + Z_t, where dim(X_t)=n*p
+    [n,np] = size(betahat);
+    A = [betahat; eye(np-n), zeros(np-n,n)];
     
     if max(abs(eig(A)))>1 % If original point estimate is outside stationary region, do not bias correct
         betahat_corr = betahat;
         return;
     end
     
-    G = diag([sigma2hat, zeros(1,p-1)]); % Var(Z_t)
-    Gamma0 = reshape((eye(p^2)-kron(A,A))\G(:),p,p); % Var(X_t)
+    G = blkdiag(Sigmahat, zeros(np-n)); % Var(Z_t)
+    Gamma0 = reshape((eye(np^2)-kron(A,A))\G(:),np,np); % Var(X_t)
     
     % Bias correction formula
-    aux = inv(eye(p)-A')+(A')/(eye(p)-A'*A');
+    aux = inv(eye(np)-A')+(A')/(eye(np)-A'*A');
     lambdas = eig(A);
-    for i=1:p
-        aux = aux + lambdas(i)*inv(eye(p)-lambdas(i)*A');
+    for lamb = lambdas'
+        aux = aux + lamb*inv(eye(np)-lamb*A');
     end
     b = G*(aux/Gamma0); % Scaled negative bias
-    A_corr = A + b/T; % Bias-corrected VAR(1) coefficients
+    A_corr = A + b/T; % Bias-corrected companion form coefficients
     
     % If corrected estimate is outside stationary region, reduce bias correction little by little
     % (as recommended by Kilian & Lütkepohl, 2017, ch. 12)
@@ -41,7 +41,7 @@ function betahat_corr = var_biascorr(betahat, sigma2hat, T)
         A_corr = A + delta*b/T;
     end
     
-    % Return bias-corrected AR(p) coefficients
-    betahat_corr = A_corr(1,:)';
+    % Return bias-corrected VAR(p) coefficients
+    betahat_corr = A_corr(1:n,:);
 
 end
