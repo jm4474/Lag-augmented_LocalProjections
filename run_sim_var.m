@@ -3,16 +3,29 @@ addpath('functions/');
 
 % Monte Carlo study of VAR(p) inference procedures
 
+% DGP:
+% y_{1,t} = rho*y_{1,t-1} + u_{1,t}
+% (1-a*L)^p y_{2,t} = a*y_{1,t-1} + u_{2,t}
+% (u_{1,t},u_{2,t}) ~ N(0,Sigma), Sigma = [1 tau; tau 1]
+% Free parameters: p, rho, a, tau
+% This DGP reduces to the one in Kilian & Kim (REStat 2011) when p=1
+
+% MPM 2020-06-26
+
 
 %% Settings
 
 dgp = struct;
 
-dgp.p = 1;
+dgp.p = 4;
 
-dgp.rhos = [0.5 0.9];
+dgp.rhos = 0.9; %[0.5 0.9];
 
-dgp.Ts = 480; 
+dgp.Ts = 480;
+
+dgp.a = 0.5;
+
+dgp.tau = 0.3;
 
 
 %% Monte Carlo simulation settings
@@ -98,6 +111,14 @@ specs{5} = {'estimator', 'lp',...
         
 %% Preliminaries
 
+% True A(2,:) and Sigma
+dgp.n = 2;
+dgp.A_lower = [dgp.a zeros(1,dgp.n*dgp.p-1)];
+for l=1:dgp.p
+    dgp.A_lower(2*l) = -nchoosek(dgp.p,l)*(-dgp.a)^l; % Coefficients on own lags of y_{2,t}
+end
+dgp.Sigma = [1 dgp.tau; dgp.tau 1];
+
 rng(sim.rng_seed);                   % Set RNG seed
 
 %dgps = combvec(dgp.rhos, dgp.Ts);   % DGPs 
@@ -181,15 +202,11 @@ for i_dgp = 1:numdgp
             'T=', i_T);             % Display the current iteration
     
 	% True VAR parameters
-    i_beta = zeros(2,2*dgp.p);
-    i_beta(1,1) = i_rho;
-    i_beta(2,:) = ([0.5; 0.5]./(1:dgp.p))';
-    i_Sigma = [1 0.3; 0.3 1];
-    i_n = size(i_beta,1);
-    fprintf('%s%6.4f\n', 'Largest root: ', abs(eigs([i_beta; eye(i_n*(dgp.p-1)) zeros(i_n*(dgp.p-1),i_n)],1)));
+    i_A = [i_rho zeros(1,dgp.n*dgp.p-1);
+           dgp.A_lower];
     
     % True impulse responses
-    i_ir_all = var_ir(i_beta,settings.horzs);
+    i_ir_all = var_ir(i_A,settings.horzs);
     irs_true(i_dgp,:) = i_ir_all(settings.resp_var,settings.innov,:);
     
     parfor(i=1:numrep, sim.num_workers) % For each repetition...
@@ -199,7 +216,7 @@ for i_dgp = 1:numdgp
     
         % Simulate VAR(p) data
         
-        i_Y = var_sim(i_beta, zeros(i_n,1), mvnrnd(zeros(1,i_n),i_Sigma,i_T), zeros(settings.p,i_n)); % Data series (with y_0=...=y_{1-p}=0)
+        i_Y = var_sim(i_A, zeros(dgp.n,1), mvnrnd(zeros(1,dgp.n),dgp.Sigma,i_T), zeros(dgp.p,dgp.n)); % Data series (with y_0=...=y_{1-p}=0)
         
         i_estims ...
             = zeros(numspec, numhorz);
