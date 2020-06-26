@@ -17,15 +17,15 @@ addpath('functions/');
 
 dgp = struct;
 
-dgp.p = 4;
+dgp.p = 4; % Lag length
 
-dgp.rhos = 0.9; %[0.5 0.9];
+dgp.rhos = [0.5 0.9]; % Values of parameter rho to loop over
 
-dgp.Ts = 480;
+dgp.Ts = 480; % Sample sizes T to loop over
 
-dgp.a = 0.5;
+dgp.a = 0.5; % Parameter a
 
-dgp.tau = 0.3;
+dgp.tau = 0.3; % Parameter tau
 
 
 %% Monte Carlo simulation settings
@@ -36,7 +36,7 @@ sim.numrep ...
     = 2e2;                                % No. of repetitions
 
 sim.rng_seed ...
-    = 202006261;                           % Random number seed
+    = 202006262;                           % Random number seed
 
 sim.num_workers ...
     = 4;                                  % No. of parallel workers 
@@ -59,6 +59,7 @@ settings.horzs ...
          = [1 6 12 36 60];           % Horizons of interest
      
 settings.resp_var = 2;              % Index of response variable of interest
+
 settings.innov = 1;                 % Index of innovation of interest
 
 settings.no_const ...
@@ -85,26 +86,36 @@ settings.har_cv ...
 
 %% List of specifications for the simulations
 
-specs = cell(5,1);           % Specifications for the simulations
+specs = cell(6,1);           % Specifications for the simulations
 
+% VAR, non-augmented
 specs{1} = {'estimator', 'var',...
+            'lag_aug', false,...
+            'bootstrap', 'var'};
+
+% VAR, lag-augmented
+specs{2} = {'estimator', 'var',...
             'lag_aug', true,...
             'bootstrap', 'var'};
 
-specs{2} = {'estimator', 'lp',...
+% LP, non-augmented, bootstrap: VAR
+specs{3} = {'estimator', 'lp',...
             'lag_aug', false,...
             'har', settings.har,...
             'bootstrap', 'var'};
 
-specs{3} = {'estimator', 'lp',...
+% LP, lag-augmented, bootstrap: VAR
+specs{4} = {'estimator', 'lp',...
             'lag_aug', true,...
             'bootstrap', 'var'};
 
-specs{4} = {'estimator', 'lp',...
+% LP, lag-augmented, bootstrap: residual
+specs{5} = {'estimator', 'lp',...
             'lag_aug', true,...
             'bootstrap', 'resid'};
- 
-specs{5} = {'estimator', 'lp',...
+
+% LP, lag-augmented, bootstrap: paired
+specs{6} = {'estimator', 'lp',...
             'lag_aug', true,...
             'bootstrap', 'pair'};
 

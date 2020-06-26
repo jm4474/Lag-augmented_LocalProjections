@@ -1,4 +1,4 @@
-function [irs, ses, cis_dm, cis_boot, betahat, res] = ir_estim(Y, p, horzs, varargin)
+function [irs, ses, cis_dm, cis_boot] = ir_estim(Y, p, horzs, varargin)
 
     % Wrapper function for AR or LP estimation of impulse responses
     % Delta method and bootstrap confidence intervals
@@ -6,12 +6,10 @@ function [irs, ses, cis_dm, cis_boot, betahat, res] = ir_estim(Y, p, horzs, vara
     % Inputs: see below
     
     % Outputs:
-    % irs       1 x H       estimated impulse responses
+    % irs       1 x H       estimated impulse responses at select horizons
     % ses       1 x H       s.e. for impulse responses
     % cis_dm    2 x H       lower and upper limits of delta method confidence intervals
     % cis_boot  2 x H x 3   lower and upper limits of bootstrap confidence intervals (3rd index: type of interval, either Efron, Hall, or Hall percentile-t)
-    % betahat               coefficient estimates in regression(s)
-    % res                   residuals in regression(s)
     
     
     %% Parse inputs
@@ -87,13 +85,13 @@ function [irs, ses, cis_dm, cis_boot, betahat, res] = ir_estim(Y, p, horzs, vara
     if strcmp(ip.Results.estimator, 'var') % VAR
         
         % VAR impulse responses
-        [irs_all, irs_all_varcov, betahat, res] = var_ir_estim(Y, ...
-                                                  p,...
-                                                  p+ip.Results.lag_aug,...
-                                                  horzs, ...
-                                                  ip.Results.bias_corr,...
-                                                  ip.Results.se_homosk,...
-                                                  ip.Results.no_const);
+        [irs_all, irs_all_varcov] = var_ir_estim(Y, ...
+                                                 p,...
+                                                 p+ip.Results.lag_aug,...
+                                                 horzs, ...
+                                                 ip.Results.bias_corr,...
+                                                 ip.Results.se_homosk,...
+                                                 ip.Results.no_const);
         
         % Impulse responses of interest and s.e.
         [irs, ses] = var_select(irs_all, irs_all_varcov, ip.Results.resp_var, nu);
@@ -173,7 +171,7 @@ function [irs, ses, cis_dm, cis_boot, betahat, res] = ir_estim(Y, p, horzs, vara
             
             % VAR coefficient estimates that define bootstrap DGP
             
-            [~, ~, betahat_var, res_var] = var_ir_estim(Y, ...
+            [~, ~, Ahat_var, res_var] = var_ir_estim(Y, ...
                                                   p,...
                                                   p+ip.Results.boot_lag_aug,...
                                                   horzs, ...
@@ -181,12 +179,12 @@ function [irs, ses, cis_dm, cis_boot, betahat, res] = ir_estim(Y, p, horzs, vara
                                                   ip.Results.se_homosk,...
                                                   ip.Results.no_const);
             
-            pseudo_truth = var_select(var_ir(betahat_var(:,1:n*(p+ip.Results.boot_lag_aug)), horzs), [], ip.Results.resp_var, nu); % Pseudo-true impulse responses in bootstrap DGP
+            pseudo_truth = var_select(var_ir(Ahat_var(:,1:n*(p+ip.Results.boot_lag_aug)), horzs), [], ip.Results.resp_var, nu); % Pseudo-true impulse responses in bootstrap DGP
             
             for b=1:ip.Results.boot_num
 
                 % Generate bootstrap sample based on (possibly lag-augmented) AR estimates
-                Y_boot = var_boot(betahat_var, res_var, Y, p+ip.Results.boot_lag_aug, ip.Results.se_homosk, ip.Results.no_const);
+                Y_boot = var_boot(Ahat_var, res_var, Y, p+ip.Results.boot_lag_aug, ip.Results.se_homosk, ip.Results.no_const);
 
                 % Estimate on bootstrap sample
                 [estims_boot(b,:),ses_boot(b,:)] = ir_estim(Y_boot, p, horzs, varargin{:});

@@ -1,11 +1,11 @@
-function Y_boot = var_boot(beta, res, Y, p, homosk, no_const)
+function Y_boot = var_boot(A, res, Y, p, homosk, no_const)
 
     % VAR residual bootstrap, homoskedastic or wild
     
     % Inputs:
-    % beta      n x np      VAR(p) coefficient estimates
+    % A      n x np         VAR(p) coefficient matrices [A_1,...,A_p]
     %                       OPTIONAL: length could exceed n*p, in which case last column equals intercept
-    %                       NOTE: only beta(:,1:n*p) and beta(:,end) will be used
+    %                       NOTE: only A(:,1:n*p) and A(:,end) will be used
     % res       T_res x n   residuals
     % Y         T x n       data vector
     % p         1 x 1       lag length
@@ -27,7 +27,7 @@ function Y_boot = var_boot(beta, res, Y, p, homosk, no_const)
     % Intercept (if applicable)
     c = zeros(n,1);
     if ~no_const
-        c = beta(:,end);
+        c = A(:,end);
     end
 
     % Draw residuals
@@ -38,6 +38,6 @@ function Y_boot = var_boot(beta, res, Y, p, homosk, no_const)
     end
     
     % Generate VAR(p) data, with residuals and initial conditions as above
-    Y_boot = [Y_init; var_sim(beta(:,1:n*p), c, res_boot, Y_init)];
+    Y_boot = [Y_init; var_sim(A(:,1:n*p), c, res_boot, Y_init)];
 
 end

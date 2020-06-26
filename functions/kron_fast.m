@@ -8,6 +8,7 @@ function C = kron_fast(A,B,type)
     % From "MATLAB array manipulation tips and tricks"
     % by Peter J. Acklam (2002), section 10.8
     
+    
     % Matrix dimensions
     [p,q] = size(A);
     [qn,m] = size(B);
