@@ -7,6 +7,7 @@ function [irs, irs_varcov, Ahat_estim, res_estim] = var_ir_estim(Y, p, p_estim, 
     % Y         T x n   data vector
     % p         1 x 1   lag length used for impulse response computations
     % p_estim   1 x 1   lag length used for estimation (p_estim >= p)
+    % (p_estim > p if lag augmented)
     % horzs     H x 1   horizons of interest
     % bias_corr bool    true: apply analytical bias correction (Pope, 1990)
     % homosk    bool    true: homoskedastic s.e., false: EHW s.e.

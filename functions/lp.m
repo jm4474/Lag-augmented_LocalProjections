@@ -4,7 +4,8 @@ function [ir, ir_varcov, betahat, betahat_varcov, res, X] = lp(Y,num_lags,horz,r
     
     % Inputs:
     % Y         T x n       data matrix
-    % num_lags  1 x 1       number of lags of Y to control for (in addition to the contemporaneous regressor)
+    % num_lags  1 x 1       number of lags of Y to control for (in addition
+    % to the contemporaneous regressor); in comments refered to as p
     % horz      1 x 1       horizon of interest
     % resp_ind  1 x m       indices of response variables Y_t of interest
     % se_setting            EITHER bool: if true, homoskedastic s.e.; if false, EHW s.e.
@@ -14,8 +15,10 @@ function [ir, ir_varcov, betahat, betahat_varcov, res, X] = lp(Y,num_lags,horz,r
     % Outputs:
     % ir                m x n               estimated impulse responses at select horizons
     % ir_varcov         mn x mn             var-cov of vec(ir)
-    % betahat           (np+n+1) x 1        full vector of estimated regression coefficients
-    % betahat_varcov    (np+n+1) x (np+n+1) var-cov of betahat
+    % betahat           (np+n+1) x 1        full vector of estimated regression coefficients (+1 if
+    % no_const is false)
+    % betahat_varcov    (np+n+1) x (np+n+1) var-cov of betahat (+1 if
+    % no_const is false)
     % res               (T-p) x m           residuals
     % X                 (T-p) x (np+n+1)    covariate data matrix including intercept
     
