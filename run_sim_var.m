@@ -19,9 +19,9 @@ dgp = struct;
 
 dgp.p = 4; % Lag length
 
-dgp.rhos = [0.5 0.9]; % Values of parameter rho to loop over
+dgp.rhos = [0.5 0.9 0.95 1]; % Values of parameter rho to loop over
 
-dgp.Ts = 480; % Sample sizes T to loop over
+dgp.Ts = [240 480 2400]; % Sample sizes T to loop over
 
 dgp.a = 0.5; % Parameter a
 
@@ -33,10 +33,10 @@ dgp.tau = 0.3; % Parameter tau
 sim = struct;
 
 sim.numrep ...
-    = 2e2;                                % No. of repetitions
+    = 2e3;                                % No. of repetitions
 
 sim.rng_seed ...
-    = 202006262;                           % Random number seed
+    = 20200707;                           % Random number seed
 
 sim.num_workers ...
     = 4;                                  % No. of parallel workers 
@@ -68,7 +68,7 @@ settings.no_const ...
 settings.se_homosk = false;
 
 settings.boot_num ...
-         = 500;                      % Number of bootstrap samples
+         = 2e3;                      % Number of bootstrap samples
 
 settings.alpha ...
          = 0.1;                      % Significance level
