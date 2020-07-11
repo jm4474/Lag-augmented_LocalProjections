@@ -11,7 +11,7 @@ dgp_type = 'var_p1'; % Either 'ar1_iid', 'ar1_arch', 'ar1_homosk', 'var_p1', or 
 
 % File names
 load_filename = fullfile('results', strcat('sim_', dgp_type, '.mat')); % Load results from this file
-save_filename = fullfile('fig', dgp_type); % First part of file name for saved figures
+save_suffix = '.png'; % Suffix for saved figures
 
 % Plot titles
 label_dm = 'delta method'; % Delta method
@@ -81,6 +81,9 @@ specs_boot = specs_boot(~empty_cells_boot);
 
 %% Create figures
 
+status = mkdir('fig');
+save_filename = fullfile('fig', dgp_type); % First part of file name for saved figures
+
 numdgp = size(dgp.dgps, 2); % No. of DGPs
 numhorz = length(settings.horzs); % No. of estimated impulse response horizons
 
@@ -135,7 +138,7 @@ for s=1:numdgp % For each DGP...
         sgtitle(sprintf('%s %4d%s %4.2f%s %s %s', 'T=', dgp.dgps(2,s), ', rho=', dgp.dgps(1,s), ':', the_label, 'interval'));
         
         % Save
-        saveas(the_f,sprintf('%s%s%d%s%d%s', save_filename, '_dgp', s, '_intv', m, '.png'));
+        saveas(the_f,sprintf('%s%s%d%s%d%s', save_filename, '_dgp', s, '_intv', m, save_suffix));
         close(the_f);
 
     end

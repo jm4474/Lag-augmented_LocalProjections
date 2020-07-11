@@ -1,3 +1,5 @@
 *.asv
 *.log
 *.mat
+results/*.*
+fig/*.*
