@@ -53,6 +53,8 @@ function [irs, ses, cis_dm, cis_boot] = ir_estim(Y, p, horzs, varargin)
         % Bootstrap iterations (default: 1000)
     addParameter(ip, 'boot_lag_aug', false, @islogical);
         % Lag-augment in bootstrap DGP? Only relevant for 'var' bootstrap (default: no)
+    addParameter(ip, 'boot_workers', 0, @isnumeric);
+        % Number of parallel workers used for bootstrapping (default: 0, meaning no parallel computation)
     addParameter(ip, 'verbose', false, @islogical);
         % Print progress to screen when bootstrapping? (default: no)
     
@@ -183,7 +185,8 @@ function [irs, ses, cis_dm, cis_boot] = ir_estim(Y, p, horzs, varargin)
             
             pseudo_truth = var_select(var_ir(Ahat_var(:,1:n*(p+ip.Results.boot_lag_aug)), horzs), [], ip.Results.resp_var, nu); % Pseudo-true impulse responses in bootstrap DGP
             
-            for b=1:ip.Results.boot_num
+%             for b=1:ip.Results.boot_num
+            parfor(b=1:ip.Results.boot_num, ip.Results.boot_workers)
 
                 % Generate bootstrap sample based on (possibly lag-augmented) VAR estimates
                 Y_boot = var_boot(Ahat_var, res_var, Y, p+ip.Results.boot_lag_aug, ip.Results.se_homosk, ip.Results.no_const);
@@ -200,7 +203,8 @@ function [irs, ses, cis_dm, cis_boot] = ir_estim(Y, p, horzs, varargin)
             
             pseudo_truth = irs;
             
-            for b=1:ip.Results.boot_num
+%             for b=1:ip.Results.boot_num
+            parfor(b=1:ip.Results.boot_num, ip.Results.boot_workers)
   
                 for h=1:nh % Treat each horizon separately
                     
