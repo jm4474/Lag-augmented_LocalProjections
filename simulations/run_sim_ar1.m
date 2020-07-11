@@ -1,50 +1,79 @@
 clear;
-addpath('functions/');
+addpath('../functions/');
 
-% Monte Carlo study of VAR(p) inference procedures
+% Monte Carlo study of AR(1) inference procedures
 
-% DGP:
-% y_{1,t} = rho*y_{1,t-1} + u_{1,t}
-% (1-a*L)^p y_{2,t} = a*y_{1,t-1} + u_{2,t}
-% (u_{1,t},u_{2,t}) ~ N(0,Sigma), Sigma = [1 tau; tau 1]
-% Free parameters: p, rho, a, tau
-% This DGP reduces to the one in Kilian & Kim (REStat 2011) when p=1
+% Estimation procedures considered:
+% 1. AR, w/ or w/o lag augmentation, w/ or w/o analytical bias correction
+% 2. LP, w/ or w/o lag augmentation
 
-% MPM 2020-06-26
+% Inference procedures considered:
+% a. Delta method (homoskedastic, EHW, or HAR)
+% b. Recursive AR bootstrap (homoskedastic or wild, lag-augmented or not)
+% c. OLS residual bootstrap (homoskedastic or wild)
+% d. OLS pairs/nonparametric bootstrap
+
+% Bootstrap confidence intervals considered:
+% i. Efron percentile interval
+% ii. Hall percentile interval
+% iii. Hall percentile-t interval
 
 
-%% Settings
+% MPM 2019-11-22
 
+
+%% Data Generating Process (DGP)
 dgp = struct;
 
-dgp.p = 4; % Lag length
+dgp.type ...
+    = 'iid';                    % ='iid': i.i.d. innovations.
+                                % But s.e./bootstraps allow for heterosk.; 
+                                % ='arch': ARCH innovations;
+                                % ='homosk': i.i.d. innovations and homosk.
+                                % s.e./bootstraps;
 
-dgp.rhos = [0.5 0.9 0.95 1]; % Values of parameter rho to loop over
+dgp.rhos ...
+    = [0 0.5 0.9 0.95 1];       % AR(1) parameters to consider
 
-dgp.Ts = [240 480 2400]; % Sample sizes T to loop over
+dgp.Ts ...
+    = [240 480 2400];           % Sample sizes to consider
 
-dgp.a = 0.5; % Parameter a
+% GARCH(1,1) innovation process
+% u_t = sigma_t*epsilon_t
+% sigma_t^2 = alpha_0 + alpha_1*u_{t-1}^2 + beta_1*sigma_{t-1}^2
+% epsilon_t ~ N(0,1)
+if strcmp(dgp.type, 'arch')
+    
+    dgp.garch_alpha_1 = 0.7;
+    
+else
+    
+    dgp.garch_alpha_1 = 0;
+    
+end
 
-dgp.tau = 0.3; % Parameter tau
+dgp.garch_beta_1 = 0;
 
-
+dgp.garch_alpha_0 = 1 - dgp.garch_alpha_1 - dgp.garch_beta_1; 
+                                % So that E[sigma_t^2]=1
+ 
 %% Monte Carlo simulation settings
 
 sim = struct;
 
 sim.numrep ...
-    = 2e3;                                % No. of repetitions
+    = 2e2;                                % No. of repetitions
 
 sim.rng_seed ...
-    = 20200707;                           % Random number seed
+    = 20191203;                           % Random number seed
 
 sim.num_workers ...
     = 4;                                  % No. of parallel workers 
                                           % (=0: run serial)
-                                          
+
 % Reporting
 results_filename ...
-    = sprintf('%s%d', 'sim_var_p', dgp.p);  % File name for storing results                                                                
+    = sprintf('%s%s', 'sim_ar1_', dgp.type);  % File name for storing results                                                                
 
 
 %% Regression settings
@@ -52,24 +81,29 @@ results_filename ...
 settings = struct;
 
 settings.p ...
-         = dgp.p;                        % Lag length used for estimation 
+         = 1;                        % Lag length used for estimation 
                                      % (excluding augmented lags)
-
+     
 settings.horzs ...
          = [1 6 12 36 60];           % Horizons of interest
      
-settings.resp_var = 2;              % Index of response variable of interest
-
-settings.innov = 1;                 % Index of innovation of interest
-
 settings.no_const ...
          = false;                    % true: omit intercept 
      
-settings.se_homosk = false;
+if strcmp(dgp.type, 'homosk')
+    
+    settings.se_homosk = true;       % false: EHW s.e./wild bootstrap, 
+                                     % true: homoskedastic s.e./bootstrap 
+                                     % (doesn't apply to HAR procedure)
+else
+    
+    settings.se_homosk = false;
+    
+end
 
 settings.boot_num ...
-         = 2e3;                      % Number of bootstrap samples
-
+         = 5e2;                      % Number of bootstrap samples
+                                     
 settings.alpha ...
          = 0.1;                      % Significance level
 
@@ -82,54 +116,64 @@ settings.har_bw ...
 settings.har_cv ...
          = @(bw) tinv(1-settings.alpha/2,bw); ...
                                      % HAR critical value
-                                 
+
 
 %% List of specifications for the simulations
 
-specs = cell(6,1);           % Specifications for the simulations
+specs = cell(9,1);           % Specifications for the simulations
 
-% VAR, non-augmented
-specs{1} = {'estimator', 'var',...
-            'lag_aug', false,...
-            'bootstrap', 'var'};
-
-% VAR, lag-augmented
+specs{1} = {'estimator', 'var',... %Estimation Method: "plug-in" ar
+            'lag_aug', false,....  %With or Without Lag-augmentation
+            'bias_corr', false};   %With or Without Biascorrection
+                                   % If 'bootstrap' option is not
+                                   % specified, standard errors are
+                                   % based on the Eicker-Huber-White
+                                   % formula.
+                                   % Heteroskedasticity and
+                                   % Autocorrelation robust standard
+                                   % errors can be incorporated with
+                                   % the 'har' option (see spec 8)
+                                        
 specs{2} = {'estimator', 'var',...
+            'lag_aug', false,...
+            'bias_corr', true};
+              
+specs{3} = {'estimator', 'var',...
             'lag_aug', true,...
-            'bootstrap', 'var', ...
+            'bias_corr', false};
+              
+specs{4} = {'estimator', 'var',...
+            'lag_aug', true,...
+            'bias_corr', true,...
+            'bootstrap', 'var',...
             'boot_lag_aug', true};
 
-% LP, non-augmented, bootstrap: VAR
-specs{3} = {'estimator', 'lp',...
+specs{5} = {'estimator', 'var',...
+            'lag_aug', true,...
+            'bias_corr', true,...
+            'bootstrap', 'var',...
+            'boot_lag_aug', false};
+
+specs{6} = {'estimator', 'lp', ...
             'lag_aug', false,...
             'har', settings.har,...
-            'bootstrap', 'var'};
-
-% LP, lag-augmented, bootstrap: VAR
-specs{4} = {'estimator', 'lp',...
+            'bootstrap', 'var',...
+            'boot_lag_aug', false};
+              
+specs{7} = {'estimator', 'lp',...
             'lag_aug', true,...
-            'bootstrap', 'var'};
+            'bootstrap', 'var',...
+            'boot_lag_aug', false};
 
-% LP, lag-augmented, bootstrap: residual
-specs{5} = {'estimator', 'lp',...
+specs{8} = {'estimator', 'lp',...
             'lag_aug', true,...
             'bootstrap', 'resid'};
-
-% LP, lag-augmented, bootstrap: paired
-specs{6} = {'estimator', 'lp',...
-            'lag_aug', true,...
+              
+specs{9} = {'estimator', 'lp',...
+            'lag_aug', true, ...
             'bootstrap', 'pair'};
 
-        
 %% Preliminaries
-
-% True A(2,:) and Sigma
-dgp.n = 2;
-dgp.A_lower = [dgp.a zeros(1,dgp.n*dgp.p-1)];
-for l=1:dgp.p
-    dgp.A_lower(2*l) = -nchoosek(dgp.p,l)*(-dgp.a)^l; % Coefficients on own lags of y_{2,t}
-end
-dgp.Sigma = [1 dgp.tau; dgp.tau 1];
 
 rng(sim.rng_seed);                   % Set RNG seed
 
@@ -149,7 +193,7 @@ clear   aux1 aux2
 
 numdgp ...
      = size(dgps,2);                 % No. of DGPs
-
+ 
 numhorz ...
      = length(settings.horzs);       % No. of horizons
  
@@ -160,18 +204,14 @@ numrep ...
      = sim.numrep;                   % No. of repetitions
 
 % Cell array of settings shared among all specifications
-spec_shared = {'resp_var', settings.resp_var, ...
-               'innov', settings.innov, ...
-               'alpha', settings.alpha, ...
+spec_shared = {'alpha', settings.alpha, ...
                'no_const', settings.no_const, ...
                'se_homosk', settings.se_homosk, ...
+               'boot_num', settings.boot_num, ...
                'har_bw', settings.har_bw, ...
                'har_cv', settings.har_cv};
 
-
 %% Run simulations
-
-irs_true = zeros(numdgp, numhorz);
 
 estims ...
     = zeros(numdgp, numspec, numhorz, numrep);
@@ -213,22 +253,18 @@ for i_dgp = 1:numdgp
             ': rho=',i_rho,...
             'T=', i_T);             % Display the current iteration
     
-	% True VAR parameters
-    i_A = [i_rho zeros(1,dgp.n*dgp.p-1);
-           dgp.A_lower];
-    
-    % True impulse responses
-    i_ir_all = var_ir(i_A,settings.horzs);
-    irs_true(i_dgp,:) = i_ir_all(settings.resp_var,settings.innov,:);
-    
     parfor(i=1:numrep, sim.num_workers) % For each repetition...
 %     for i=1:numrep
         
         rng(i_rand_seeds(i));       % Set RNG seed
     
-        % Simulate VAR(p) data
+        % Simulate AR(1) data with GARCH innovations
+        i_U = sim_garch(dgp.garch_alpha_0,...
+                        dgp.garch_alpha_1,...
+                        dgp.garch_beta_1,...
+                        i_T);
         
-        i_Y = var_sim(i_A, zeros(dgp.n,1), mvnrnd(zeros(1,dgp.n),dgp.Sigma,i_T), zeros(dgp.p,dgp.n)); % Data series (with y_0=...=y_{1-p}=0)
+        i_Y = filter(1, [1 -i_rho], i_U); % Data series (with y_0=0)
         
         i_estims ...
             = zeros(numspec, numhorz);
@@ -290,7 +326,8 @@ end
 dgp.dgps ...
     = dgps;
 
-dgp.irs_true = irs_true;
+dgp.irs_true ...
+    = dgps(1,:)'.^settings.horzs; % True impulse responses
 
 % Store results
 results ...
@@ -331,7 +368,6 @@ results.lengths ...
 
 results.median_length ...
     = median(results.lengths, 5); % Median length
-           
 
 %% Save results
 status = mkdir('results');
