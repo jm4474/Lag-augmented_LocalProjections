@@ -53,6 +53,8 @@ function [irs, ses, cis_dm, cis_boot] = ir_estim(Y, p, horzs, varargin)
         % Bootstrap iterations (default: 1000)
     addParameter(ip, 'boot_lag_aug', false, @islogical);
         % Lag-augment in bootstrap DGP? Only relevant for 'var' bootstrap (default: no)
+    addParameter(ip, 'verbose', false, @islogical);
+        % Print progress to screen when bootstrapping? (default: no)
     
     parse(ip, Y, p, horzs, varargin{:});
     
@@ -188,17 +190,20 @@ function [irs, ses, cis_dm, cis_boot] = ir_estim(Y, p, horzs, varargin)
 
                 % Estimate on bootstrap sample
                 [estims_boot(b,:),ses_boot(b,:)] = ir_estim(Y_boot, p, horzs, varargin{:});
+                
+                % Print progress
+                print_prog(b, ip.Results.boot_num, ip.Results.verbose);
 
             end
 
         else % Linear regression bootstrap specifications
             
             pseudo_truth = irs;
+            
+            for b=1:ip.Results.boot_num
   
-            for h=1:nh % Treat each horizon separately
-
-                for b=1:ip.Results.boot_num
-
+                for h=1:nh % Treat each horizon separately
+                    
                     % Generate bootstrap sample
                     [Y_boot, X_boot] = linreg_boot(betahat{h}',res{h},X{h},ip.Results.bootstrap,ip.Results.se_homosk);
 
@@ -207,6 +212,9 @@ function [irs, ses, cis_dm, cis_boot] = ir_estim(Y, p, horzs, varargin)
                     [estims_boot(b,h),ses_boot(b,h)] = lp_select(the_linreg_betahat(1:n),the_linreg_varcov(1:n,1:n),nu);
 
                 end
+                
+                % Print progress
+                print_prog(b, ip.Results.boot_num, ip.Results.verbose);
 
             end
         
@@ -245,4 +253,18 @@ function [ir, se] = lp_select(irs_all, irs_all_varcov, nu)
     ir = irs_all*nu;
     se = sqrt(nu'*irs_all_varcov*nu);
 
+end
+
+function print_prog(b, n, verbose)
+   
+    % Print progress to screen periodicially
+    
+    if ~verbose
+        return;
+    end
+    
+    if mod(b,ceil(n/10))==0
+        fprintf('%3d%s\n', 100*b/n, '%');
+    end
+    
 end
