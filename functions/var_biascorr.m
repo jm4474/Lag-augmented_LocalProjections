@@ -1,11 +1,11 @@
-function A_corr = var_biascorr(A, Sigmahat, T)
+function A_corr = var_biascorr(A, Sigma, T)
 
     % Analytical bias correction for VAR(p) estimator
     % Pope (JTSA 1990), equation 9
     
     % Inputs:
     % A             n x np  original VAR(p) coefficient estimates [A_1,...,A_p]
-    % Sigmahat     	n x n   estimate of VAR(p) innovation variance
+    % Sigma     	n x n   estimate of VAR(p) innovation variance
     % T             1 x 1   sample size
     
     % Outputs:
@@ -21,7 +21,7 @@ function A_corr = var_biascorr(A, Sigmahat, T)
         return;
     end
     
-    G = blkdiag(Sigmahat, zeros(np-n)); % Var(Z_t)
+    G = blkdiag(Sigma, zeros(np-n)); % Var(Z_t)
     Gamma0 = reshape((eye(np^2)-kron(A_comp,A_comp))\G(:),np,np); % Var(X_t)
     
     % Bias correction formula
