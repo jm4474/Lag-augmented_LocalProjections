@@ -62,7 +62,7 @@ dgp.garch_alpha_0 = 1 - dgp.garch_alpha_1 - dgp.garch_beta_1;
 sim = struct;
 
 sim.numrep ...
-    = 2e2;                                % No. of repetitions
+    = 5e3;                                % No. of repetitions
 
 sim.rng_seed ...
     = 20191203;                           % Random number seed
@@ -102,7 +102,7 @@ else
 end
 
 settings.boot_num ...
-         = 5e2;                      % Number of bootstrap samples
+         = 2e3;                      % Number of bootstrap samples
                                      
 settings.alpha ...
          = 0.1;                      % Significance level

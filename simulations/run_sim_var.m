@@ -33,7 +33,7 @@ dgp.tau = 0.3; % Parameter tau
 sim = struct;
 
 sim.numrep ...
-    = 2e3;                                % No. of repetitions
+    = 5e3;                                % No. of repetitions
 
 sim.rng_seed ...
     = 20200707;                           % Random number seed
