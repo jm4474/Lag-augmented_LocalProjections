@@ -22,7 +22,9 @@ function A_corr = var_biascorr(A, Sigma, T)
     end
     
     G = blkdiag(Sigma, zeros(np-n)); % Var(Z_t)
-    Gamma0 = reshape((eye(np^2)-kron(A_comp,A_comp))\G(:),np,np); % Var(X_t)
+    Gamma0 = dlyap(A_comp, G); % Var(X_t), requires Control System Toolbox
+    % The following slower command does not require Control System Toolbox:
+%     Gamma0 = reshape((eye(np^2)-kron(A_comp,A_comp))\G(:),np,np);  
     
     % Bias correction formula
     aux = inv(eye(np)-A_comp')+(A_comp')/(eye(np)-A_comp'*A_comp');
