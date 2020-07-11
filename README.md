@@ -10,12 +10,12 @@ Tested in Matlab R2020a on Windows 10 PC, 64-bit
 ## Contents
 
 **[functions](functions):** Matlab routines
-- [functions/ir_estim.m](ir_estim.m): main function for impulse response inference
+- [ir_estim.m](functions/ir_estim.m): main function for impulse response inference
 
 **[examples](examples):** Empirical examples
-- [examples/gk.m](gk.m): example based on Gertler & Karadi (2015)
+- [gk.m](examples/gk.m): example based on Gertler & Karadi (2015)
 
 **[simulations](simulations):** Simulation studies
-- [simulations/run_sim_ar1.m](run_sim_ar1.m): AR(1) study
-- [simulations/run_sim_var.m](run_sim_var.m): VAR(p) study
-- [simulations/create_figs.m](create_figs.m): create figures of results
+- [run_sim_ar1.m](simulations/run_sim_ar1.m): AR(1) study
+- [run_sim_var.m](simulations/run_sim_var.m): VAR(p) study
+- [create_figs.m](simulations/create_figs.m): create figures of results
