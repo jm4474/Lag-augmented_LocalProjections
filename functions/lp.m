@@ -12,12 +12,12 @@ function [ir, ir_varcov, betahat, betahat_varcov, res, X] = lp(Y,num_lags,horz,r
     % no_const   bool       true: omit intercept
     
     % Outputs:
-    % ir                m x n               estimated impulse responses at select horizons
-    % ir_varcov         mn x mn             var-cov of vec(ir)
-    % betahat           (np+n+1) x 1        full vector of estimated regression coefficients
-    % betahat_varcov    (np+n+1) x (np+n+1) var-cov of betahat
-    % res               (T-p) x m           residuals
-    % X                 (T-p) x (np+n+1)    covariate data matrix including intercept
+    % ir                m x n                             estimated impulse responses at select horizons
+    % ir_varcov         mn x mn                           var-cov of vec(ir)
+    % betahat           m x (n*num_lags+n+~no_const)      full vector of estimated regression coefficients
+    % betahat_varcov    (m x (n*num_lags+n+~no_const))^2  var-cov of vec(betahat)
+    % res               (T-p) x m                         residuals
+    % X                 (T-p) x (n*num_lags+n+~no_const)  covariate data matrix (expanded if intercept included)
     
     
     % Covariate matrix
