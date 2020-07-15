@@ -22,13 +22,17 @@ function [Y_boot,X_boot] = linreg_boot(beta, res, X, method, homosk)
         end
         
         Y_boot = X*beta + res_boot;
+        
         X_boot = X;
         
     else % Pair/nonparametric bootstrap
         
-        Y = X*beta + res;
-        inds = randi(T,T,1);
+        Y      = X*beta + res;
+        
+        inds   = randi(T,T,1);
+        
         Y_boot = Y(inds);
+        
         X_boot = X(inds,:);
         
     end
