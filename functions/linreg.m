@@ -13,7 +13,8 @@ function [betahat, varcov, res, X_expand] = linreg(Y, X, se_setting, no_const)
     
     % Outputs:
     % betahat   n x (k+~no_const)       estimated coefficients
-    % varcov    (n(k+~no_const))^2      var-cov of vec(betahat)
+    % varcov    (n(k+~no_const)) x      var-cov of vec(betahat)
+    %           (n(k+~no_const))                         
     % res       T x n                   residual matrix
     % X_expand  T x (k+~no_const)       covariate data matrix (if no_const)expanded covariate data matrix with intercept
     
@@ -36,7 +37,7 @@ function [betahat, varcov, res, X_expand] = linreg(Y, X, se_setting, no_const)
         scores = kron(X_expand,ones(1,n)).*repmat(res,1,k);
 
         if islogical(se_setting)
-            if se_setting % If homo?skedastic s.e.
+            if se_setting % If homoskedastic s.e.
                 varcov = kron(inv(XpX),(res'*res)/T);
             else % If EHW s.e.
                 varcov = kron_fast(inv(XpX),kron_fast(inv(XpX),scores'*scores,0)',0)'; % EHW var-cov matrix
