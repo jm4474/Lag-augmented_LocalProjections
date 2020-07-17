@@ -177,19 +177,11 @@ specs{9} = {'estimator', 'lp',...
 
 rng(sim.rng_seed);                   % Set RNG seed
 
-%dgps = combvec(dgp.rhos, dgp.Ts);   % DGPs 
-                                     % combvec Requires Matlab 2019
-                                     % The following line works in previous
-                                     % versions
-                                     % Consider changing the name of dgps
-                                     % to persistence_horizon_combination
-                                     % to avoid confusion with the
-                                     % structure dgp.
-                                     
+% Combinations of DGP parameters
 aux1   = repmat(dgp.rhos,size(dgp.Ts));
 aux2   = repmat(dgp.Ts',size(dgp.rhos))';
 dgps  = [aux1;reshape(aux2,[1,size(aux1,2)])];
-clear   aux1 aux2
+clear   aux1 aux2;
 
 numdgp ...
      = size(dgps,2);                 % No. of DGPs
@@ -210,6 +202,7 @@ spec_shared = {'alpha', settings.alpha, ...
                'boot_num', settings.boot_num, ...
                'har_bw', settings.har_bw, ...
                'har_cv', settings.har_cv};
+
 
 %% Run simulations
 
@@ -304,7 +297,7 @@ for i_dgp = 1:numdgp
         cis_upper(i_dgp,:,:,:,i) = i_cis_upper;
         
         if mod(i, ceil(numrep/10)) == 0
-            fprintf('%6d%s\n', i/numrep*100, '%');
+            fprintf('%6d%s\n', round(i/numrep*100), '%');
         end
         
     end
