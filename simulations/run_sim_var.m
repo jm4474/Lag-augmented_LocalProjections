@@ -125,10 +125,10 @@ specs{6} = {'estimator', 'lp',...
 
 % True A(2,:) and Sigma
 dgp.n = 2;
-dgp.A_lower = [dgp.a zeros(1,dgp.n*dgp.p-1)];
-for l=1:dgp.p
-    dgp.A_lower(2*l) = -nchoosek(dgp.p,l)*(-dgp.a)^l; % Coefficients on own lags of y_{2,t}
-end
+dgp.A_lower = [dgp.a zeros(1,2*dgp.p-1)];
+aux_coef = poly(repmat(1/dgp.a,1,dgp.p)); % Coef's of polynomial (1/a-x)^p
+dgp.A_lower(2:2:end) = -aux_coef(end-1:-1:1)/aux_coef(end);
+clear   aux_coef;
 dgp.Sigma = [1 dgp.tau; dgp.tau 1];
 
 rng(sim.rng_seed);                   % Set RNG seed
