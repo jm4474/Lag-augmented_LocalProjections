@@ -1,13 +1,11 @@
-# Lag-augmented Local Projections (LALP)
+# Lag-augmented Local Projections
 
 Matlab code for inference on impulse responses using local projection or VAR, with or without lag augmentation
 
 **Reference:**
 Montiel Olea, José Luis, and Mikkel Plagborg-Møller (2020), "Local Projection Inference is Simpler and More Robust Than You Think", https://scholar.princeton.edu/mikkelpm/publications/lp_inference (paper + supplemental appendix)
 
-Tested in:
-Matlab R2020a on Windows 10 PC, 64-bit
-Matlab 2019a on Macbook Pro 2019 @2.6 ghz core intel i7
+Tested in: Matlab R2020a on Windows 10 PC (64-bit) and Matlab R2019a on Macbook Pro 2019
 
 ## Contents
 
