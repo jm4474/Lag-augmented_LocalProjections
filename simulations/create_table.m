@@ -1,6 +1,7 @@
 clear;
 
 % Create table of coverage and length
+% based on AR(1) simulation results
 
 
 %% Settings
@@ -8,44 +9,23 @@ clear;
 % DGP type
 dgp_type = 'iid'; % Either 'iid', 'arch', or 'homosk';
 
-% File names
-load_filename = strcat('../results/sim_', dgp_type, '.mat'); % Load results from this file
-save_filename = strcat('./', dgp_type); % First part of file name for saved figures
+% File name
+load_filename = fullfile('results', strcat('sim_ar1_', dgp_type, '.mat'));  % Load results from this file
+save_filename = dgp_type; % File name for saved table
 
 % Select DGPs
-T_sel = 240;
-rhos_sel = [0.0 0.5 0.95 1];
+T_sel = 240;                    % Single number
+rhos_sel = [0.0 0.5 0.95 1];    % Array
 
-%{
 % Select CI procedures
-if strcmp(se_type, 'boot')
-    proc_names = {'$\text{AR}_d$', '$\text{AR}_b^*$', '$\text{LP}_b$', '$\text{LP}_b^*$'}; % Names of procedures
-    procs = [1 1;
-             4 2;
-             6 4;
-             7 4]; % Rows = selected procedures; 1st column = index of procedure; 2nd column = index of CI type
-else
-    proc_names = {'$\text{AR}_d$', '$\text{AR}_d^*$', '$\text{LP}_d$', '$\text{LP}_d^*$'};
-    procs = [1 1;
-             4 1;
-             6 1;
-             7 1];
-end
-%}
 proc_names = {'$\text{LP-LA}_b$', '$\text{LP-LA}$', '$\text{LP}_b$', '$\text{LP}$', '$\text{AR-LA}_b$', '$\text{AR}$'};
-procs = [7 4;
+procs = [7 4; % First index: inference procedure; second index: type of confidence interval
          7 1;
          6 4;
          6 1
          4 2
          1 1];
-%{
-proc_names = {'$\text{AR}_e$', '$\text{LP}_h$', '$\text{LP}_w$', '$\text{LP}_h$'};
-procs = [5 2;
-         6 1;
-         7 1;
-         7 4];
-%}
+
 
 %% Load results
 
@@ -63,7 +43,8 @@ numproc = length(proc_names); % Number of inference procedures
 
 %% Write table
 
-f = fopen(strcat(save_filename, '.tex'), 'w'); % Open file for writing
+status = mkdir('tables');
+f = fopen(fullfile('tables', strcat(save_filename, '.tex')), 'w'); % Open file for writing
 
 fprintf(f, '%s%s%s%s%s\n', '\begin{tabular}{r|', repmat('c', 1, numproc), '|', repmat('c', 1, numproc), '}');
 fprintf(f, '%s%d%s%d%s\n', '& \multicolumn{', numproc, '}{c|}{Coverage} & \multicolumn{', numproc, '}{c}{Median length} \\');
@@ -83,13 +64,12 @@ for d=dgp_sel
         fprintf(f, '%3d', h);
         for j=1:numproc
             cp = results.coverage_prob(d,procs(j,1),ih,procs(j,2));
-            color_str = '';
-            fprintf(f, '%s%s%5.3f%s', ' & ', '{', cp, '}');
+            fprintf(f, '%s%5.3f', ' & ', cp);
         end
         for j=1:numproc
             ml = results.median_length(d,procs(j,1),ih,procs(j,2));
             color_str = '';
-            fprintf(f, '%s%s%s%5.3f%s', ' & ', color_str, '{', ml, '}');
+            fprintf(f, '%s%5.3f', ' & ', ml);
         end
         fprintf(f, '%s\n', ' \\');
     end

@@ -3,3 +3,4 @@
 *.mat
 simulations/results/*.*
 simulations/figures/*.*
+simulations/tables/*.*

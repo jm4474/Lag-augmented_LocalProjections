@@ -1,6 +1,8 @@
 clear;
 
 % Create figures of coverage and length
+% based on AR(1) or VAR(p) simulation results
+
 % MPM 2019-11-22
 
 

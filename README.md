@@ -18,4 +18,5 @@ Tested in: Matlab R2020a on Windows 10 PC (64-bit) and Matlab R2019a on Macbook 
 **[simulations](simulations):** Simulation studies
 - [run_sim_ar1.m](simulations/run_sim_ar1.m): AR(1) study
 - [run_sim_var.m](simulations/run_sim_var.m): VAR(p) study
-- [create_figs.m](simulations/create_figs.m): create figures of results
+- [create_figs.m](simulations/create_figs.m): create figures of AR(1) and VAR(p) results
+- [create_table.m](simulations/create_table.m): create table of AR(1) results
