@@ -62,7 +62,7 @@ clear;
 
 %% Fast Kronecker product
 
-rng(20200710);
+rng(20200710, 'twister');
 A = randn(3);
 n = 2;
 B = randn(size(A,1)*n,2);
@@ -73,7 +73,7 @@ clear;
 
 %% Linear regression
 
-rng(20200710);
+rng(20200710, 'twister');
 k = 3;
 X = randn(100,k);
 beta = randn(k,1);
@@ -89,7 +89,7 @@ T = 1e6;
 A = [[0.7 0; 0.5 0.5] [0 0; 0.25 0.25]];
 c = [1; 0];
 Sigma = [1 0.3; 0.3 1];
-rng(20200710);
+rng(20200710, 'twister');
 
 n = size(A,1);
 p = size(A,2)/n;
@@ -131,7 +131,7 @@ A = [[0.7 0; 0.5 0.5] [0 0; 0.25 0.25]];
 Sigma = [1 0.3; 0.3 1];
 T = 1e3; % Sample size
 numrep = 1e5; % Number of Monte Carlo repetitions
-rng(2020710);
+rng(2020710, 'twister');
 
 [n,np] = size(A);
 p = np/n;
@@ -142,7 +142,7 @@ b = (A-A_corr)*T; % Analytical negative bias x T
 A_estims = zeros(n,np,numrep);
 rngs = randi(2^32-1,numrep,1);
 parfor i=1:numrep
-    rng(rngs(i));
+    rng(rngs(i), 'twister');
     Y = var_sim(A, [0 0]', mvnrnd([0 0],Sigma,T), zeros(p,n));
     [~,~,betahat_estim] = lp(Y,p-1,1,1:n,true,false);
     A_estims(:,:,i) = betahat_estim(:,1:np);
@@ -151,5 +151,5 @@ parfor i=1:numrep
     end
 end
 
-assert(norm(b-T*mean(A_estims-A,3))/norm(b)<8e-2);
+assert(norm(b-T*mean(A_estims-A,3))/norm(b)<0.1);
 clear;

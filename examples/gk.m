@@ -29,7 +29,7 @@ plot_xtick = [1 6:6:maxhorz];   % x-axis ticks
 boot_num = 500;                     % # of repetitions
 poolobj = gcp;
 boot_workers = poolobj.NumWorkers;  % # of parallel workers
-rng(20200711);                      % Set random number seed
+rng(20200711, 'twister');           % Set random number seed
 
 
 %% Load data

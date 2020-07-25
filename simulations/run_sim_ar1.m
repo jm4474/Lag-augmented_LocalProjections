@@ -65,7 +65,7 @@ sim.numrep ...
     = 5e3;                                % No. of repetitions
 
 sim.rng_seed ...
-    = 20191203;                           % Random number seed
+    = 202007251;                           % Random number seed
 
 sim.num_workers ...
     = 4;                                  % No. of parallel workers 
@@ -175,7 +175,7 @@ specs{9} = {'estimator', 'lp',...
 
 %% Preliminaries
 
-rng(sim.rng_seed);                   % Set RNG seed
+rng(sim.rng_seed, 'twister');                   % Set RNG seed
 
 % Combinations of DGP parameters
 aux1   = repmat(dgp.rhos,size(dgp.Ts));
@@ -249,7 +249,7 @@ for i_dgp = 1:numdgp
     parfor(i=1:numrep, sim.num_workers) % For each repetition...
 %     for i=1:numrep
         
-        rng(i_rand_seeds(i));       % Set RNG seed
+        rng(i_rand_seeds(i), 'twister');       % Set RNG seed
     
         % Simulate AR(1) data with GARCH innovations
         i_U = sim_garch(dgp.garch_alpha_0,...
