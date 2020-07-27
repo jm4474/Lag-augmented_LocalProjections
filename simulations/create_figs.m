@@ -9,7 +9,7 @@ clear;
 %% Settings
 
 % DGP type
-dgp_type = 'var_p1'; % Either 'ar1_iid', 'ar1_arch', 'ar1_homosk', 'var_p1', or 'var_p4';
+dgp_type = 'ar1_iid'; % Either 'ar1_iid', 'ar1_arch', 'ar1_homosk', 'var_p1', or 'var_p4';
 
 % File names
 load_filename = fullfile('results', strcat('sim_', dgp_type, '.mat')); % Load results from this file
@@ -60,7 +60,7 @@ for j=1:numspec
                 the_bootstrap = specs{j}{k+1};
             case 'boot_lag_aug'
                 if specs{j}{k+1}
-                    the_bootstrap_spec_la = '-la';
+                    the_boot_lag_aug = '-la';
                 end
         end
     end
@@ -71,7 +71,7 @@ for j=1:numspec
 end
 
 % Keep only unique entries for delta method specifications
-[specs_dm, specs_dm_ind] = unique(specs_dm);
+[specs_dm, specs_dm_ind] = unique(specs_dm, 'stable');
 specs_dm_ind = specs_dm_ind';
 
 % Drop non-bootstrap specifications from bootstrap labels

@@ -9,7 +9,7 @@ clear;
 % DGP type
 dgp_type = 'iid'; % Either 'iid', 'arch', or 'homosk';
 
-% File name
+% File names
 load_filename = fullfile('results', strcat('sim_ar1_', dgp_type, '.mat'));  % Load results from this file
 save_filename = dgp_type; % File name for saved table
 
