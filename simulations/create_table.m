@@ -68,7 +68,6 @@ for d=dgp_sel
         end
         for j=1:numproc
             ml = results.median_length(d,procs(j,1),ih,procs(j,2));
-            color_str = '';
             fprintf(f, '%s%5.3f', ' & ', ml);
         end
         fprintf(f, '%s\n', ' \\');
