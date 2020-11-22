@@ -40,15 +40,15 @@ numspec = length(specs); % No. of specifications
 
 %% Create figure
 
-numvars = length(settings.resp_vars); % No. of response variables
+numvar = length(settings.resp_vars); % No. of response variables
 numhorz = length(settings.horzs); % No. of estimated impulse response horizons
 
 the_f = figure('Units', 'normalize', 'Position', [0.1 0.1 0.8 0.8]);
 
-for i=1:numvars
+for i=1:numvar
 
     % Coverage probability
-    subplot(2,numvars,i);
+    subplot(2,numvar,i);
     hold on;
     for j=1:numspec
         plot(1:numhorz, squeeze(results.coverage_prob(i,procs(j,1),:,procs(j,2))), line_specs{j}, 'Color', line_colors(j,:), 'LineWidth', 2);
@@ -63,7 +63,7 @@ for i=1:numvars
     title(['coverage: ', title_vars{i}]);
 
     % Median length
-    subplot(2,numvars,numvars+i);
+    subplot(2,numvar,numvar+i);
     hold on;
     for j=1:numspec
         plot(1:numhorz, squeeze(results.median_length(i,procs(j,1),:,procs(j,2))), line_specs{j}, 'Color', line_colors(j,:), 'LineWidth', 2);
@@ -74,7 +74,7 @@ for i=1:numvars
     ylim(ylim_length);
     title(['median length: ', title_vars{i}]);
     
-    if i==numvars
+    if i==numvar
         legend(legend_text, 'Location', 'SouthEast');
     end
 

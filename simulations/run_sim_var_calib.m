@@ -27,7 +27,7 @@ sim.numrep ...
     = 1e3;                                % No. of repetitions
 
 sim.rng_seed ...
-    = 202011201;                           % Random number seed
+    = 202011211;                           % Random number seed
 
 sim.num_workers ...
     = 4;                                  % No. of parallel workers 
@@ -108,13 +108,23 @@ data.dat = innerjoin(readtable(data.file_var), readtable(data.file_iv));
 data.Y = data.dat{:,data.vars}; % Select variables
 data.Y = data.Y(~any(isnan(data.Y),2),:); % Remove missing
 data.Y = detrend(data.Y,0); % Remove mean
-data.T = size(data.Y,1); % Sample size
+[data.T,data.n] = size(data.Y); % Sample size
 
 % Estimate VAR and true IRFs
 [data.irs, ~, data.A, data.res] ...
     = var_ir_estim(data.Y, settings.p, settings.p, settings.horzs, ...
                    false, false, false);
-data.Sigma = cov(data.res);
+               
+% Residual var-cov matrix
+data.Sigma = (data.res'*data.res)/(size(data.res,1)-size(data.A,2));
+
+% Display largest eigenvalues
+data.A_comp ...
+    = [data.A(:,1:end-1);
+      eye(data.n*(settings.p-1)) zeros(data.n*(settings.p-1),data.n)];
+                                                    % Companion matrix
+disp('Five largest VAR eigenvalues (absolute values)');
+disp(abs(eigs(data.A_comp,5))');
 
 
 %% Preliminaries
@@ -122,16 +132,16 @@ data.Sigma = cov(data.res);
 % True parameters
 dgp = struct;
 dgp.A = data.A(:,1:end-1);
-dgp.n = size(dgp.A,1);
 dgp.Sigma = data.Sigma;
 dgp.irs = data.irs;
+dgp.n = data.n;
 dgp.T = data.T;
 
 rng(sim.rng_seed, 'twister');                   % Set RNG seed
 
 resp_vars = settings.resp_vars;     % Indices of response variables
 
-numvars ...
+numvar ...
      = length(settings.resp_vars);                 % No. of response variables
 
 numhorz ...
@@ -157,12 +167,12 @@ spec_shared = {'p', settings.p, ...
 %% Run simulations
 
 estims ...
-    = zeros(numvars, numspec, numhorz, numrep);
+    = zeros(numvar, numspec, numhorz, numrep);
                                      % Initialize matrix for results
 ses = estims;
 
 cis_lower ...
-    = zeros(numvars, numspec, numhorz, 4, numrep); 
+    = zeros(numvar, numspec, numhorz, 4, numrep); 
                                      % 4th index = type of CI: 
                                      % i) delta method, 
                                      % ii) Efron, 
@@ -177,71 +187,68 @@ if sim.num_workers > 0
     
 end
 
+rand_seeds ...
+      = randi(2^32-1,1,numrep); % Random number seeds to be 
+                                % supplied to parallel workers
+
 timer = tic; % Start timer
 
-for i_var = 1:numvars
+parfor(i=1:numrep, sim.num_workers) % For each repetition...
+% for i=1:numrep
     
-    i_resp_var = resp_vars(i_var);
-    
-    i_rand_seeds ...
-          = randi(2^32-1,1,numrep); % Random number seeds to be 
-                                    % supplied to parallel workers
-                                    
-    fprintf('%2d%s%2d\n',...
-            i_var,...
-            '/', ...
-            numvars);             % Display the current iteration
-    
-    parfor(i=1:numrep, sim.num_workers) % For each repetition...
-%     for i=1:numrep
-        
-        rng(i_rand_seeds(i), 'twister');       % Set RNG seed
-    
-        % Simulate VAR(p) data
-        
-        i_Y = var_sim(dgp.A, zeros(dgp.n,1), mvnrnd(zeros(1,dgp.n),dgp.Sigma,dgp.T), zeros(settings.p,dgp.n)); % Data series (with y_0=...=y_{1-p}=0)
-        
-        i_estims ...
-            = zeros(numspec, numhorz);
-        
-        i_ses ...
-            = i_estims;
-        
-        i_cis_lower ...
-            = nan(numspec, numhorz, 4);  % 4 refers to the 4 types of CIs
-        
-        i_cis_upper ...
-            = i_cis_lower;
-        
+    rng(rand_seeds(i), 'twister');       % Set RNG seed
+
+    % Simulate VAR(p) data
+
+    i_Y = var_sim(dgp.A, zeros(dgp.n,1), mvnrnd(zeros(1,dgp.n),dgp.Sigma,dgp.T), zeros(settings.p,dgp.n)); % Data series (with y_0=...=y_{1-p}=0)
+
+    i_estims ...
+        = zeros(numvar, numspec, numhorz);
+
+    i_ses ...
+        = i_estims;
+
+    i_cis_lower ...
+        = nan(numvar, numspec, numhorz, 4);  % 4 refers to the 4 types of CIs
+
+    i_cis_upper ...
+        = i_cis_lower;
+
+    for i_var = 1:numvar % For each response variable of interest...
+
+        i_resp_var = resp_vars(i_var);
+
         % Run all estimation procedures and compute delta method CIs
         for j=1:numspec
-            
+
             % Estimate
-            [i_estims(j,:),...
-             i_ses(j,:),   ...
+            [i_estims(i_var,j,:),...
+             i_ses(i_var,j,:),   ...
              i_cis_dm,   ...
-             i_cis_boot] = ir_estim(i_Y, settings.p, settings.horzs, spec_shared{:}, specs{j}{:});
-            
+             i_cis_boot] = ir_estim(i_Y, settings.p, settings.horzs, ...
+                                    'resp_var', i_resp_var, ...
+                                    spec_shared{:}, specs{j}{:});
+
             % Delta method confidence interval
-            i_cis_lower(j,:,1) = i_cis_dm(1,:);
-            i_cis_upper(j,:,1) = i_cis_dm(2,:);
-            
+            i_cis_lower(i_var,j,:,1) = i_cis_dm(1,:);
+            i_cis_upper(i_var,j,:,1) = i_cis_dm(2,:);
+
             % Bootstrap confidence intervals
-            i_cis_lower(j,:,2:end) = i_cis_boot(1,:,:);
-            i_cis_upper(j,:,2:end) = i_cis_boot(2,:,:);
-            
+            i_cis_lower(i_var,j,:,2:end) = i_cis_boot(1,:,:);
+            i_cis_upper(i_var,j,:,2:end) = i_cis_boot(2,:,:);
+
         end
-        
-        % Store all results for this repetition
-        estims(i_var,:,:,i) = i_estims;
-        ses(i_var,:,:,i) = i_ses;
-        cis_lower(i_var,:,:,:,i) = i_cis_lower;
-        cis_upper(i_var,:,:,:,i) = i_cis_upper;
-        
-        if mod(i, ceil(numrep/10)) == 0
-            fprintf('%6d%s\n', round(i/numrep*100), '%');
-        end
-        
+
+    end
+
+    % Store all results for this repetition
+    estims(:,:,:,i) = i_estims;
+    ses(:,:,:,i) = i_ses;
+    cis_lower(:,:,:,:,i) = i_cis_lower;
+    cis_upper(:,:,:,:,i) = i_cis_upper;
+
+    if mod(i, ceil(numrep/50)) == 0
+        fprintf('%6d%s\n', round(i/numrep*100), '%');
     end
     
 end
