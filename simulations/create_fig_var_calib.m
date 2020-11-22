@@ -1,6 +1,6 @@
 clear;
 
-% Create figures of coverage and length
+% Create figure of coverage and length
 % based on Gertler & Karadi (2015) calibrated VAR simulation results
 
 % MPM 2020-11-20
@@ -40,9 +40,6 @@ numspec = length(specs); % No. of specifications
 
 %% Create figure
 
-status = mkdir('figures');
-save_filename = fullfile('figures', 'var_calib'); % First part of file name for saved figures
-
 numvars = length(settings.resp_vars); % No. of response variables
 numhorz = length(settings.horzs); % No. of estimated impulse response horizons
 
@@ -81,5 +78,14 @@ for i=1:numvars
         legend(legend_text, 'Location', 'SouthEast');
     end
 
+end
+
+% Save
+status = mkdir('figures');
+save_filename = fullfile('figures', 'var_calib'); % First part of file name for saved figures
+if strcmp(save_suffix, '.eps')
+    saveas(the_f,strcat(save_filename, save_suffix),'epsc');
+else
+    saveas(the_f,strcat(save_filename, save_suffix));
 end
 
