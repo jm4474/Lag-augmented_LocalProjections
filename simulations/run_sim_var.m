@@ -51,10 +51,6 @@ results_filename ...
 
 settings = struct;
 
-settings.p ...
-         = dgp.p;                        % Lag length used for estimation 
-                                     % (excluding augmented lags)
-
 settings.horzs ...
          = [1 6 12 36 60];           % Horizons of interest
      
@@ -86,7 +82,8 @@ settings.har_cv ...
 
 %% List of specifications for the simulations
 
-specs = cell(6,1);           % Specifications for the simulations
+specs = cell(5,1);           % Specifications for the simulations
+specs_p = repmat(dgp.p,5,1); % Lag lengths used for estimation (excluding augmentation)
 
 % VAR, non-augmented
 specs{1} = {'estimator', 'var',...
@@ -110,15 +107,9 @@ specs{4} = {'estimator', 'lp',...
             'lag_aug', true,...
             'bootstrap', 'var'};
 
-% LP, lag-augmented, bootstrap: residual
-specs{5} = {'estimator', 'lp',...
-            'lag_aug', true,...
-            'bootstrap', 'resid'};
-
-% LP, lag-augmented, bootstrap: paired
-specs{6} = {'estimator', 'lp',...
-            'lag_aug', true,...
-            'bootstrap', 'pair'};
+% LP, lag-augmented, bootstrap: VAR, larger lag length p
+specs{5} = specs{4};
+specs_p(5) = 2*dgp.p;
 
         
 %% Preliminaries
@@ -242,7 +233,7 @@ for i_dgp = 1:numdgp
             [i_estims(j,:),...
              i_ses(j,:),   ...
              i_cis_dm,   ...
-             i_cis_boot] = ir_estim(i_Y, settings.p, settings.horzs, spec_shared{:}, specs{j}{:});
+             i_cis_boot] = ir_estim(i_Y, specs_p(j), settings.horzs, spec_shared{:}, specs{j}{:});
             
             % Delta method confidence interval
             i_cis_lower(j,:,1) = i_cis_dm(1,:);
@@ -328,4 +319,4 @@ results.median_length ...
 
 %% Save results
 status = mkdir('results');
-save(strcat('results/',results_filename, '.mat'), 'dgp', 'specs', 'settings', 'sim', 'results');
+save(strcat('results/',results_filename, '.mat'), 'dgp', 'specs', 'specs_p', 'settings', 'sim', 'results');
