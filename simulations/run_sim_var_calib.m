@@ -1,22 +1,40 @@
 clear;
 addpath('../functions/');
 
-% Monte Carlo study of VAR inference procedures
-% calibrated to Gertler & Karadi (AEJ:Macro 2015) data
+% Monte Carlo study of medium-scale VAR inference procedures
+% calibrated to real data
 
 % MPM 2020-11-20
 
 
-%% Data settings
+%% Choose overall experiment
+
+exper = 'gk'; % Either 'gk' (based on Gertler & Karadi, AEJ:Macro 2015)
+              % or 'kk' (based on Kilian & Murphy, RESTAT 2011)
+
+
+%% Data used for calibration
 
 data = struct;
 
-% Data files from Gertler & Karadi (2015)
-data.file_var = '../examples/gk_data/VAR_data.csv';      % VAR series
-data.file_iv = '../examples/gk_data/factor_data.csv';    % External instrument series
+switch exper
+    
+    case 'gk' % Gertler & Karadi (AEJ:Macro 2015) data
+        data.file_var = '../data/gk/VAR_data.csv';      % VAR series
+        data.file_iv = '../data/gk/factor_data.csv';    % External instrument series
+        data.dat = innerjoin(readtable(data.file_var), readtable(data.file_iv)); % Load data
+        data.Y = data.dat{:,{'logcpi', 'logip', 'ff', 'ebp', 'ff4_tc'}}; % Variables in VAR
+        data.Y = data.Y(~any(isnan(data.Y),2),:); % Remove missing
 
-% Variables
-data.vars = {'logcpi', 'logip', 'ff', 'ebp', 'ff4_tc'};  % Variables in VAR
+    case 'kk' % Similar to Kilian & Kim (RESTAT 2011)
+        data.file = '../data/data_sim.csv'; % VAR data file
+        data.dat = readtable(data.file); % Load data
+        cpi_log = 1200*log(data.dat.cpiaucsl); % Log CPI, annualized
+        realcom_log = 1200*log(data.dat.cmcrbind)-cpi_log; % Log real commodity price, annualized
+        data.Y = [data.dat{2:end,{'fedfunds', 'cfnai'}} cpi_log(2:end)-cpi_log(1:end-1) realcom_log(2:end)-realcom_log(1:end-1)]; % Variables in VAR
+        clearvars cpi_log realcom_log;
+    
+end
 
 
 %% Monte Carlo simulation settings
@@ -27,7 +45,7 @@ sim.numrep ...
     = 1e3;                                % No. of repetitions
 
 sim.rng_seed ...
-    = 202011211;                           % Random number seed
+    = 202011251;                          % Random number seed
 
 sim.num_workers ...
     = 4;                                  % No. of parallel workers 
@@ -35,22 +53,30 @@ sim.num_workers ...
                                           
 % Reporting
 results_filename ...
-    = sprintf('%s%d', 'sim_var_calib');  % File name for storing results                                                                
+    = sprintf('%s%d', strcat('sim_var_calib_', exper));  % File name for storing results                                                                
 
 
 %% Regression settings
 
 settings = struct;
 
-settings.p = 12;                        % Lag length used for estimation 
-                                     % (excluding augmented lags)
+settings.p = 12;            % Lag length used for estimation 
+                            % (excluding augmented lags)
 
 settings.horzs ...
-         = 1:48;           % Horizons of interest
-     
-settings.resp_vars = [1 2 4]; % Indices of response variables of interest
+         = 1:48;            % Horizons of interest
 
-settings.innov = 5; % Index of innovation of interest
+switch exper
+    
+    case 'gk'
+        settings.resp_vars = [1 2 4]; % Indices of response variables of interest
+        settings.innov = 5; % Index of innovation of interest
+        
+    case 'kk'
+        settings.resp_vars = [2 3 4]; % Indices of response variables of interest
+        settings.innov = 1; % Index of innovation of interest
+    
+end
 
 settings.no_const ...
          = false;                    % true: omit intercept 
@@ -74,7 +100,7 @@ settings.har_cv ...
                                      % HAR critical value
                                  
 
-%% List of specifications for the simulations
+%% List of specifications
 
 specs = cell(4,1);           % Specifications for the simulations
 
@@ -103,10 +129,6 @@ specs{4} = {'estimator', 'lp',...
         
 %% Estimate VAR in data
 
-% Load data
-data.dat = innerjoin(readtable(data.file_var), readtable(data.file_iv));
-data.Y = data.dat{:,data.vars}; % Select variables
-data.Y = data.Y(~any(isnan(data.Y),2),:); % Remove missing
 data.Y = detrend(data.Y,0); % Remove mean
 [data.T,data.n] = size(data.Y); % Sample size
 
@@ -114,17 +136,21 @@ data.Y = detrend(data.Y,0); % Remove mean
 [data.irs, ~, data.A, data.res] ...
     = var_ir_estim(data.Y, settings.p, settings.p, settings.horzs, ...
                    false, false, false);
-               
+
 % Residual var-cov matrix
 data.Sigma = (data.res'*data.res)/(size(data.res,1)-size(data.A,2));
 
 % Display largest eigenvalues
-data.A_comp ...
+data.A_comp ... % Companion matrix
     = [data.A(:,1:end-1);
       eye(data.n*(settings.p-1)) zeros(data.n*(settings.p-1),data.n)];
-                                                    % Companion matrix
+
 disp('Five largest VAR eigenvalues (absolute values)');
-disp(abs(eigs(data.A_comp,5))');
+data.A_eig = eig(data.A_comp);
+[data.A_eig_abs,I] = sort(abs(data.A_eig),'descend');
+disp(data.A_eig_abs(1:5)');
+data.A_eig = data.A_eig(I);
+clearvars I;
 
 
 %% Preliminaries
@@ -308,4 +334,4 @@ results.median_length ...
 
 %% Save results
 status = mkdir('results');
-save(strcat('results/',results_filename, '.mat'), 'data', 'dgp', 'specs', 'settings', 'sim', 'results');
+save(strcat('results/',results_filename, '.mat'), 'exper', 'data', 'dgp', 'specs', 'settings', 'sim', 'results');

@@ -1,35 +1,46 @@
 clear;
 
 % Create figure of coverage and length
-% based on Gertler & Karadi (2015) calibrated VAR simulation results
+% based on empirically calibrated VAR simulation results
 
 % MPM 2020-11-20
 
 
 %% Settings
 
+% Overall experiment
+exper = 'gk'; % Either 'gk' (Gertler & Karadi) or 'kk' (Kilian & Kim)
+
 % File names
-load_filename = fullfile('results', 'sim_var_calib.mat'); % Load results from this file
+load_filename = fullfile('results', strcat('sim_var_calib_', exper, '.mat')); % Load results from this file
+save_filename = fullfile('figures', strcat('var_calib_', exper)); % First part of file name for saved figures
 save_suffix = '.png'; % Suffix for saved figures
 
-% Plot titles
-title_vars = {'CPI', 'IP', 'EBP'}; % Plot titles for the three variables
+% Plot titles for response variables
+switch exper
+    case 'gk'
+        title_vars = {'CPI', 'IP', 'EBP'};
+    case 'kk'
+        title_vars = {'Output gap', 'CPI inflation', 'Real commodity inflation'};
+end
 
 % Specifications and legend
-procs = [1 1;
-         2 2;
-         3 4;
+procs = [2 2;
          4 4]; % Index of specification (left) and associated CI (right)
-legend_text = {'VAR dm', 'VAR-LA boot', 'LP-NA boot', 'LP-LA boot'}; % Legend for specifications
+legend_text = {'VAR-LA boot', 'LP-LA boot'}; % Legend for specifications
 
 % Axis limits
-ylim_cover = [0.4 1]; % y-limits for coverage prob plot
-ylim_length = [0 10]; % y-limits for median length plot
+switch exper
+    case 'gk'
+        ylim_cover = [0.4 1]; % y-limits for coverage prob plot
+    case 'kk'
+        ylim_cover = [0.75 1];
+end
 xticks = [1 6:6:48];   % x-axis ticks
 
 % Line specs
-line_colors = [lines(2); 0.5 0.5 0.5; 0 0 0];
-line_specs = {'-.', '--', ':', '-'};
+line_colors = [lines(1); 0 0 0];
+line_specs = {'--', '-'};
 
 
 %% Load results
@@ -71,7 +82,6 @@ for i=1:numvar
     hold off;
     set(gca, 'XTick', xticks);
     xlabel('horizon');
-    ylim(ylim_length);
     title(['median length: ', title_vars{i}]);
     
     if i==numvar
@@ -82,7 +92,6 @@ end
 
 % Save
 status = mkdir('figures');
-save_filename = fullfile('figures', 'var_calib'); % First part of file name for saved figures
 if strcmp(save_suffix, '.eps')
     saveas(the_f,strcat(save_filename, save_suffix),'epsc');
 else

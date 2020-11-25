@@ -10,8 +10,8 @@ addpath('../functions/');
 %% Settings
 
 % Data files from Gertler & Karadi (2015)
-file_var = 'gk_data/VAR_data.csv';      % VAR series
-file_iv = 'gk_data/factor_data.csv';    % External instrument series
+file_var = '../data/gk/VAR_data.csv';      % VAR series
+file_iv = '../data/gk/factor_data.csv';    % External instrument series
 
 % Specification
 vars = {'logcpi', 'logip', 'ff', 'ebp', 'ff4_tc'};  % Variables in VAR
