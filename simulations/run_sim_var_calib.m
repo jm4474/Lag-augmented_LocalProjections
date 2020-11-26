@@ -1,8 +1,8 @@
 clear;
 addpath('../functions/');
 
-% Monte Carlo study of medium-scale VAR inference procedures
-% calibrated to real data
+% Monte Carlo study in larger-scale VAR(p) models
+% calibrated to real empirical applications and data
 
 % MPM 2020-11-20
 
@@ -42,7 +42,7 @@ end
 sim = struct;
 
 sim.numrep ...
-    = 1e3;                                % No. of repetitions
+    = 2e3;                                % No. of repetitions
 
 sim.rng_seed ...
     = 202011251;                          % Random number seed

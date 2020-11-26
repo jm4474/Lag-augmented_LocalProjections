@@ -1,7 +1,7 @@
 clear;
 addpath('../functions/');
 
-% Monte Carlo study of VAR(p) inference procedures
+% Monte Carlo study in bivariate VAR(p) model
 
 % DGP:
 % y_{1,t} = rho*y_{1,t-1} + u_{1,t}
@@ -19,7 +19,7 @@ dgp = struct;
 
 dgp.p = 4; % Lag length
 
-dgp.rhos = [0.5 0.9 0.95 1]; % Values of parameter rho to loop over
+dgp.rhos = [0.0 0.5 0.95 1]; % Values of parameter rho to loop over
 
 dgp.Ts = [240 480 2400]; % Sample sizes T to loop over
 

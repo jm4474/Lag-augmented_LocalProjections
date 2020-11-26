@@ -1,7 +1,7 @@
 clear;
 addpath('../functions/');
 
-% Monte Carlo study of AR(1) inference procedures
+% Monte Carlo study in AR(1) model
 
 % Estimation procedures considered:
 % 1. AR, w/ or w/o lag augmentation, w/ or w/o analytical bias correction

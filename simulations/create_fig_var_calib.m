@@ -19,9 +19,9 @@ save_suffix = '.png'; % Suffix for saved figures
 % Plot titles for response variables
 switch exper
     case 'gk'
-        title_vars = {'CPI', 'IP', 'EBP'};
+        title_vars = {'CPI', 'Indu. product.', 'Exc. bond prem.'};
     case 'kk'
-        title_vars = {'Output gap', 'CPI inflation', 'Real commodity inflation'};
+        title_vars = {'Output gap', 'CPI inflation', 'Real comm. infl.'};
 end
 
 % Specifications and legend
@@ -32,11 +32,11 @@ legend_text = {'VAR-LA boot', 'LP-LA boot'}; % Legend for specifications
 % Axis limits
 switch exper
     case 'gk'
-        ylim_cover = [0.4 1]; % y-limits for coverage prob plot
+        ylim_cover = [0.75 1]; % y-limits for coverage prob plot
     case 'kk'
-        ylim_cover = [0.75 1];
+        ylim_cover = [0.8 1];
 end
-xticks = [1 6:6:48];   % x-axis ticks
+xticks = [1 12:12:48];   % x-axis ticks
 
 % Line specs
 line_colors = [lines(1); 0 0 0];
@@ -46,7 +46,7 @@ line_specs = {'--', '-'};
 %% Load results
 
 load(load_filename);
-numspec = length(specs); % No. of specifications
+numspec = size(procs,1); % No. of specifications to plot
 
 
 %% Create figure
@@ -64,14 +64,18 @@ for i=1:numvar
     for j=1:numspec
         plot(1:numhorz, squeeze(results.coverage_prob(i,procs(j,1),:,procs(j,2))), line_specs{j}, 'Color', line_colors(j,:), 'LineWidth', 2);
     end
-    the_xlim = xlim;
-    plot(the_xlim, (1-settings.alpha)*[1 1], 'Color', 'k', 'LineStyle', ':'); % Nominal confidence level
+    plot([1 numhorz], (1-settings.alpha)*[1 1], 'Color', 'k', 'LineStyle', ':'); % Nominal confidence level
     hold off;
-    xlim(the_xlim);
     set(gca, 'XTick', xticks);
-    xlabel('horizon');
+    xlim([1 numhorz]);
+%     xlabel('horizon');
     ylim(ylim_cover);
     title(['coverage: ', title_vars{i}]);
+    set(gca, 'FontSize', 12);
+    
+    if i==1
+        legend(legend_text, 'Location', 'SouthWest');
+    end
 
     % Median length
     subplot(2,numvar,numvar+i);
@@ -81,12 +85,10 @@ for i=1:numvar
     end
     hold off;
     set(gca, 'XTick', xticks);
-    xlabel('horizon');
+    xlim([1 numhorz]);
+%     xlabel('horizon');
     title(['median length: ', title_vars{i}]);
-    
-    if i==numvar
-        legend(legend_text, 'Location', 'SouthEast');
-    end
+    set(gca, 'FontSize', 12);
 
 end
 
