@@ -9,7 +9,7 @@ clear;
 %% Settings
 
 % DGP type
-dgp_type = 'ar1_iid'; % Either 'ar1_iid', 'ar1_arch', 'ar1_homosk', 'var_p1', or 'var_p4';
+dgp_type = 'ar1_iid'; % Either 'ar1_iid', 'ar1_arch', 'ar1_homosk', or 'var_pX' (where X is integer)
 
 % File names
 load_filename = fullfile('results', strcat('sim_', dgp_type, '.mat')); % Load results from this file
@@ -65,6 +65,9 @@ for j=1:numspec
         end
     end
     specs_dm{j} = sprintf('%s%s%s%s', upper(the_estimator), the_lag_aug, the_bias_corr, the_har); % Labels for delta method specifications
+    if exist('specs_p', 'var')
+        specs_dm{j} = sprintf('%s %s%d', specs_dm{j}, 'p=', specs_p(j)); % VAR study: also show lag length used
+    end
     if ~isempty(the_bootstrap)
         specs_boot{j} = sprintf('%s %s%s%s', specs_dm{j}, 'boot:', the_bootstrap, the_boot_lag_aug); % Labels for bootstrap specifications
     end
