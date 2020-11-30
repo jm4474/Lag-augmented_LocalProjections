@@ -19,15 +19,15 @@ save_suffix = '.png'; % Suffix for saved figures
 % Plot titles for response variables
 switch exper
     case 'gk'
-        title_vars = {'CPI', 'Indu. product.', 'Exc. bond prem.'};
+        title_vars = {'CPI', 'Indu. product.', 'Bond premium'};
     case 'kk'
-        title_vars = {'Output gap', 'CPI inflation', 'Real comm. infl.'};
+        title_vars = {'Real activity', 'CPI inflation', 'Commod. inf.'};
 end
 
 % Specifications and legend
-procs = [2 2;
-         4 4]; % Index of specification (left) and associated CI (right)
-legend_text = {'VAR-LA boot', 'LP-LA boot'}; % Legend for specifications
+procs = [1 2;
+         2 4]; % Index of specification (left) and associated CI (right)
+legend_text = {'Lag-aug. VAR', 'Lag-aug. LP'}; % Legend for specifications
 
 % Axis limits
 switch exper
@@ -70,12 +70,8 @@ for i=1:numvar
     xlim([1 numhorz]);
 %     xlabel('horizon');
     ylim(ylim_cover);
-    title(['coverage: ', title_vars{i}]);
+    title(['Coverage: ', title_vars{i}]);
     set(gca, 'FontSize', 12);
-    
-    if i==1
-        legend(legend_text, 'Location', 'SouthWest');
-    end
 
     % Median length
     subplot(2,numvar,numvar+i);
@@ -87,8 +83,12 @@ for i=1:numvar
     set(gca, 'XTick', xticks);
     xlim([1 numhorz]);
 %     xlabel('horizon');
-    title(['median length: ', title_vars{i}]);
+    title(['Median length: ', title_vars{i}]);
     set(gca, 'FontSize', 12);
+    
+    if i==1
+        legend(legend_text, 'Location', 'NorthWest');
+    end
 
 end
 
