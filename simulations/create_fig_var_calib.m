@@ -34,7 +34,7 @@ switch exper
     case 'gk'
         ylim_cover = [0.75 1]; % y-limits for coverage prob plot
     case 'kk'
-        ylim_cover = [0.8 1];
+        ylim_cover = [0.85 1];
 end
 xticks = [1 12:12:48];   % x-axis ticks
 
@@ -95,7 +95,7 @@ end
 % Save
 status = mkdir('figures');
 if strcmp(save_suffix, '.eps')
-    saveas(the_f,strcat(save_filename, save_suffix),'epsc');
+    print(the_f,strcat(save_filename, save_suffix),'-depsc','-loose');
 else
     saveas(the_f,strcat(save_filename, save_suffix));
 end
