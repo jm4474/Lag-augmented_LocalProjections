@@ -7,7 +7,7 @@ clear;
 %% Settings
 
 % DGP type
-dgp_type = 'iid'; % Either 'iid', 'arch', or 'homosk';
+dgp_type = 'ar1_iid'; % Either 'ar1_iid', 'ar1_arch', 'ar1_homosk', or 'var_pX' (where X is integer)
 
 % File names
 load_filename = fullfile('results', strcat('sim_', dgp_type, '.mat'));  % Load results from this file
