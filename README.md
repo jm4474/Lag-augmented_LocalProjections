@@ -22,3 +22,7 @@ Tested in: Matlab R2020a on Windows 10 PC (64-bit) and Matlab R2019a on Macbook 
 - [create_figs.m](simulations/create_figs.m): create figures of AR(1) and bivariate VAR results
 - [create_table.m](simulations/create_table.m): create table of AR(1) and bivariate VAR results
 - [create_fig_var_calib.m](simulations/create_fig_var_calib.m): create figure of empirically calibrated VAR results
+
+## Acknowledgements
+
+Plagborg-Møller acknowledges that this material is based upon work supported by the National Science Foundation under Grant #1851665.
