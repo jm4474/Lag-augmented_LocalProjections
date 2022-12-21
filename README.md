@@ -3,7 +3,7 @@
 Matlab code for inference on impulse responses using local projection or VAR, with or without lag augmentation
 
 **Reference:**
-Montiel Olea, José Luis, and Mikkel Plagborg-Møller (2020), "Local Projection Inference is Simpler and More Robust Than You Think", https://scholar.princeton.edu/mikkelpm/publications/lp_inference (paper + supplemental appendix)
+Montiel Olea, José Luis, and Mikkel Plagborg-Møller (2021), "[Local Projection Inference is Simpler and More Robust Than You Think](https://doi.org/10.3982/ECTA18756)", *Econometrica* 89(4), 1789-1823 (also available as [arXiv:2007.13888](https://arxiv.org/abs/2007.13888))
 
 Tested in: Matlab R2020a on Windows 10 PC (64-bit) and Matlab R2019a on Macbook Pro 2019
 
